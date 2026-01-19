@@ -23,26 +23,26 @@ export default function Home() {
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-6">
               <Car className="h-4 w-4" />
-              <span className="text-sm font-medium">Reliable Vehicle Hire Service</span>
+              <span className="text-sm font-medium">West Bengal's Trusted Transport Network</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Travel Between Cities <span className="text-primary">With Ease</span>
+              Your Journey, <span className="text-primary">Simplified</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Book rides from point A to B, and enjoy the convenience of return trips. Drivers list their routes, customers book their seats.
+              Connect with verified drivers across West Bengal. Whether you're commuting between cities or planning a trip, book comfortable rides at transparent fares with just a few taps.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/customer">
                 <Button size="lg" className="gap-2 w-full sm:w-auto" data-testid="link-customer">
                   <Users className="h-5 w-5" />
-                  Book a Ride
+                  Find a Ride
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/driver">
                 <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto" data-testid="link-driver">
                   <Car className="h-5 w-5" />
-                  List Your Vehicle
+                  Register as Driver
                 </Button>
               </Link>
             </div>
@@ -53,7 +53,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">How It Works</h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">Simple process for both drivers and customers</p>
+          <p className="text-muted-foreground max-w-xl mx-auto">A seamless experience designed for convenience and reliability</p>
         </div>
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           <Card>
@@ -61,8 +61,8 @@ export default function Home() {
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <MapPin className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Choose Your Route</h3>
-              <p className="text-muted-foreground text-sm">Browse available routes from your origin to destination.</p>
+              <h3 className="font-semibold text-lg mb-2">Select Your Route</h3>
+              <p className="text-muted-foreground text-sm">Search from 400+ locations across West Bengal including major stations, airports, and landmarks.</p>
             </CardContent>
           </Card>
           <Card>
@@ -70,8 +70,8 @@ export default function Home() {
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Pick Departure Time</h3>
-              <p className="text-muted-foreground text-sm">Select from available departure and return times.</p>
+              <h3 className="font-semibold text-lg mb-2">Choose Your Schedule</h3>
+              <p className="text-muted-foreground text-sm">Pick departure times that suit you. One-way or round-trip options available.</p>
             </CardContent>
           </Card>
           <Card>
@@ -79,8 +79,8 @@ export default function Home() {
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Safe & Reliable</h3>
-              <p className="text-muted-foreground text-sm">Travel with verified drivers. No hidden charges.</p>
+              <h3 className="font-semibold text-lg mb-2">Travel with Confidence</h3>
+              <p className="text-muted-foreground text-sm">Verified drivers, upfront pricing, and multiple vehicle options to match your needs.</p>
             </CardContent>
           </Card>
         </div>
@@ -95,11 +95,11 @@ export default function Home() {
                   <Users className="h-7 w-7 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-xl mb-2">For Customers</h3>
-                  <p className="text-muted-foreground mb-4">Find available rides, compare fares, and book your seats instantly.</p>
+                  <h3 className="font-semibold text-xl mb-2">For Passengers</h3>
+                  <p className="text-muted-foreground mb-4">Discover available rides across West Bengal. Compare vehicles, timings, and fares to find the perfect match for your journey.</p>
                   <Link href="/customer">
                     <Button variant="outline" size="sm" className="gap-2" data-testid="link-customer-section">
-                      Browse Rides
+                      Search Rides
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -114,11 +114,11 @@ export default function Home() {
                   <Car className="h-7 w-7 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-xl mb-2">For Drivers</h3>
-                  <p className="text-muted-foreground mb-4">List your car, set your routes and fares. Earn by providing transport.</p>
+                  <h3 className="font-semibold text-xl mb-2">For Vehicle Owners</h3>
+                  <p className="text-muted-foreground mb-4">Monetize your vehicle by offering rides on your regular routes. Set your own schedule, pricing, and grow your transport business.</p>
                   <Link href="/driver">
                     <Button variant="outline" size="sm" className="gap-2" data-testid="link-driver-section">
-                      List Your Vehicle
+                      Start Earning
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
