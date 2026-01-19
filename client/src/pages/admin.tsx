@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Car as CarType, Booking } from "@shared/schema";
+import type { Car as CarType, Booking, Driver } from "@shared/schema";
+import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const vehicleTypeLabels: Record<string, string> = {
@@ -30,16 +31,29 @@ const getVehicleIcon = (type: string) => {
   }
 };
 
-type TabType = "dashboard" | "vehicles" | "bookings";
+type TabType = "dashboard" | "vehicles" | "bookings" | "drivers";
+
+type DriverStatusFilter = "all" | "pending" | "approved" | "rejected";
+
+const maskAadhaar = (aadhaar: string) => {
+  if (aadhaar.length >= 12) {
+    return "XXXX XXXX " + aadhaar.slice(-4);
+  }
+  return aadhaar;
+};
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [deleteCarId, setDeleteCarId] = useState<string | null>(null);
   const [expandedBooking, setExpandedBooking] = useState<string | null>(null);
+  const [driverStatusFilter, setDriverStatusFilter] = useState<DriverStatusFilter>("all");
+  const [rejectDriverId, setRejectDriverId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const { toast } = useToast();
 
   const { data: cars = [], isLoading: carsLoading } = useQuery<CarType[]>({ queryKey: ["/api/cars"] });
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({ queryKey: ["/api/bookings"] });
+  const { data: drivers = [], isLoading: driversLoading } = useQuery<Driver[]>({ queryKey: ["/api/drivers"] });
 
   const deleteMutation = useMutation({
     mutationFn: async (carId: string) => { await apiRequest("DELETE", `/api/cars/${carId}`); },
@@ -49,6 +63,26 @@ export default function Admin() {
       setDeleteCarId(null);
     },
     onError: () => { toast({ title: "Error", description: "Failed to remove vehicle.", variant: "destructive" }); },
+  });
+
+  const verifyDriverMutation = useMutation({
+    mutationFn: async ({ driverId, status, rejectionReason }: { driverId: string; status: "approved" | "rejected"; rejectionReason?: string }) => {
+      await apiRequest("PATCH", `/api/drivers/${driverId}/verify`, { status, rejectionReason });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      toast({ 
+        title: variables.status === "approved" ? "Driver Approved" : "Driver Rejected", 
+        description: variables.status === "approved" 
+          ? "The driver has been approved and can now add vehicles." 
+          : "The driver has been rejected."
+      });
+      setRejectDriverId(null);
+      setRejectionReason("");
+    },
+    onError: () => { 
+      toast({ title: "Error", description: "Failed to verify driver.", variant: "destructive" }); 
+    },
   });
 
   const totalVehicles = cars.length;
@@ -72,12 +106,21 @@ export default function Admin() {
 
   const topRoutes = Object.entries(routeStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-  const isLoading = carsLoading || bookingsLoading;
+  const pendingDrivers = drivers.filter(d => d.verificationStatus === "pending");
+  const approvedDrivers = drivers.filter(d => d.verificationStatus === "approved");
+  const rejectedDrivers = drivers.filter(d => d.verificationStatus === "rejected");
+
+  const filteredDrivers = driverStatusFilter === "all" 
+    ? drivers 
+    : drivers.filter(d => d.verificationStatus === driverStatusFilter);
+
+  const isLoading = carsLoading || bookingsLoading || driversLoading;
 
   const tabs = [
     { id: "dashboard" as TabType, label: "Dashboard", icon: LayoutDashboard },
     { id: "vehicles" as TabType, label: "Vehicles", icon: Car, count: totalVehicles },
     { id: "bookings" as TabType, label: "Bookings", icon: BookOpen, count: totalBookings },
+    { id: "drivers" as TabType, label: "Drivers", icon: Users, count: pendingDrivers.length },
   ];
 
   return (
@@ -461,6 +504,156 @@ export default function Admin() {
                 )}
               </div>
             )}
+
+            {activeTab === "drivers" && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold">Driver Verification</h2>
+                    <p className="text-sm text-muted-foreground">Review and verify driver applications</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(["all", "pending", "approved", "rejected"] as DriverStatusFilter[]).map((status) => (
+                      <Button
+                        key={status}
+                        variant={driverStatusFilter === status ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setDriverStatusFilter(status)}
+                        data-testid={`filter-driver-${status}`}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                        {status === "pending" && pendingDrivers.length > 0 && (
+                          <Badge variant="secondary" className="ml-1.5 text-xs">{pendingDrivers.length}</Badge>
+                        )}
+                        {status === "approved" && (
+                          <Badge variant="secondary" className="ml-1.5 text-xs">{approvedDrivers.length}</Badge>
+                        )}
+                        {status === "rejected" && (
+                          <Badge variant="secondary" className="ml-1.5 text-xs">{rejectedDrivers.length}</Badge>
+                        )}
+                        {status === "all" && (
+                          <Badge variant="secondary" className="ml-1.5 text-xs">{drivers.length}</Badge>
+                        )}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {filteredDrivers.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="py-16 text-center">
+                      <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="font-semibold text-lg mb-2">
+                        {driverStatusFilter === "all" ? "No drivers registered" : `No ${driverStatusFilter} drivers`}
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        {driverStatusFilter === "all" 
+                          ? "Driver applications will appear here once they register."
+                          : `Drivers with ${driverStatusFilter} status will appear here.`}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredDrivers.map((driver) => (
+                      <Card key={driver.id} data-testid={`admin-driver-${driver.id}`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-4">
+                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
+                              driver.verificationStatus === "approved" 
+                                ? "bg-green-500/10" 
+                                : driver.verificationStatus === "rejected" 
+                                  ? "bg-red-500/10" 
+                                  : "bg-amber-500/10"
+                            }`}>
+                              {driver.verificationStatus === "approved" ? (
+                                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                              ) : driver.verificationStatus === "rejected" ? (
+                                <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                              ) : (
+                                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="font-semibold">{driver.name}</h3>
+                                    <Badge 
+                                      className={`text-xs ${
+                                        driver.verificationStatus === "approved" 
+                                          ? "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30" 
+                                          : driver.verificationStatus === "rejected" 
+                                            ? "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30" 
+                                            : "bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                      }`}
+                                    >
+                                      {driver.verificationStatus}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">Age: {driver.age} years</p>
+                                </div>
+                                {driver.verificationStatus === "pending" && (
+                                  <div className="flex items-center gap-2">
+                                    <Button 
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-green-600 border-green-600/30 hover:bg-green-500/10"
+                                      onClick={() => verifyDriverMutation.mutate({ driverId: driver.id, status: "approved" })}
+                                      disabled={verifyDriverMutation.isPending}
+                                      data-testid={`button-approve-driver-${driver.id}`}
+                                    >
+                                      {verifyDriverMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <CheckCircle className="h-4 w-4 mr-1" />
+                                          Approve
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button 
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-red-600 border-red-600/30 hover:bg-red-500/10"
+                                      onClick={() => setRejectDriverId(driver.id)}
+                                      disabled={verifyDriverMutation.isPending}
+                                      data-testid={`button-reject-driver-${driver.id}`}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-1" />
+                                      Reject
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <Phone className="h-4 w-4" />
+                                  <span>{driver.mobile}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <Shield className="h-4 w-4" />
+                                  <span>Aadhaar: {maskAadhaar(driver.aadhaarNumber)}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                  <Car className="h-4 w-4" />
+                                  <span>License: {driver.licenseNumber}</span>
+                                </div>
+                              </div>
+                              {driver.verificationStatus === "rejected" && driver.rejectionReason && (
+                                <div className="mt-3 p-2 rounded-lg bg-red-500/10 text-sm text-red-600 dark:text-red-400">
+                                  Rejection reason: {driver.rejectionReason}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -477,6 +670,39 @@ export default function Admin() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleteCarId && deleteMutation.mutate(deleteCarId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!rejectDriverId} onOpenChange={() => { setRejectDriverId(null); setRejectionReason(""); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Driver?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please provide a reason for rejecting this driver application.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Enter rejection reason (optional)"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              data-testid="input-rejection-reason"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => rejectDriverId && verifyDriverMutation.mutate({ 
+                driverId: rejectDriverId, 
+                status: "rejected", 
+                rejectionReason: rejectionReason || undefined 
+              })} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-reject"
+            >
+              {verifyDriverMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reject Driver"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

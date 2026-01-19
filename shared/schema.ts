@@ -3,8 +3,58 @@ import { z } from "zod";
 export const vehicleTypes = ["car", "suv", "van", "bus", "minibus", "motorcycle", "auto_rickshaw", "truck"] as const;
 export type VehicleType = typeof vehicleTypes[number];
 
+export const driverVerificationStatus = ["pending", "approved", "rejected"] as const;
+export type DriverVerificationStatus = typeof driverVerificationStatus[number];
+
+export const customerSchema = z.object({
+  id: z.string(),
+  mobile: z.string(),
+  name: z.string(),
+  age: z.number(),
+  createdAt: z.string(),
+});
+
+export const insertCustomerSchema = z.object({
+  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  age: z.number().min(18, "Must be at least 18 years old").max(100, "Invalid age"),
+});
+
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Customer = z.infer<typeof customerSchema>;
+
+export const driverSchema = z.object({
+  id: z.string(),
+  mobile: z.string(),
+  name: z.string(),
+  age: z.number(),
+  aadhaarNumber: z.string(),
+  licenseNumber: z.string(),
+  aadhaarImage: z.string().optional(),
+  licenseImage: z.string().optional(),
+  rcImage: z.string().optional(),
+  verificationStatus: z.enum(driverVerificationStatus),
+  rejectionReason: z.string().optional(),
+  createdAt: z.string(),
+});
+
+export const insertDriverSchema = z.object({
+  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  age: z.number().min(18, "Must be at least 18 years old").max(70, "Maximum age is 70"),
+  aadhaarNumber: z.string().min(12, "Aadhaar number must be 12 digits").max(12, "Aadhaar number must be 12 digits"),
+  licenseNumber: z.string().min(5, "License number is required"),
+  aadhaarImage: z.string().optional(),
+  licenseImage: z.string().optional(),
+  rcImage: z.string().optional(),
+});
+
+export type InsertDriver = z.infer<typeof insertDriverSchema>;
+export type Driver = z.infer<typeof driverSchema>;
+
 export const carSchema = z.object({
   id: z.string(),
+  driverId: z.string(),
   vehicleType: z.enum(vehicleTypes),
   driverName: z.string(),
   driverPhone: z.string(),
@@ -12,6 +62,7 @@ export const carSchema = z.object({
   carNumber: z.string(),
   origin: z.string(),
   destination: z.string(),
+  waypoints: z.array(z.string()).optional(),
   fare: z.number(),
   returnFare: z.number(),
   departureTime: z.string(),
@@ -22,6 +73,7 @@ export const carSchema = z.object({
 });
 
 export const insertCarSchema = z.object({
+  driverId: z.string().optional(),
   vehicleType: z.enum(vehicleTypes),
   driverName: z.string().min(2, "Driver name must be at least 2 characters"),
   driverPhone: z.string().min(10, "Phone number must be at least 10 digits"),
@@ -29,6 +81,7 @@ export const insertCarSchema = z.object({
   carNumber: z.string().min(2, "Vehicle number is required"),
   origin: z.string().min(2, "Origin location is required"),
   destination: z.string().min(2, "Destination location is required"),
+  waypoints: z.array(z.string()).optional(),
   fare: z.number().min(1, "Fare must be at least 1"),
   returnFare: z.number().min(1, "Return fare must be at least 1"),
   departureTime: z.string().min(1, "Departure time is required"),
@@ -42,8 +95,11 @@ export type Car = z.infer<typeof carSchema>;
 export const bookingSchema = z.object({
   id: z.string(),
   carId: z.string(),
+  customerId: z.string(),
   customerName: z.string(),
   customerPhone: z.string(),
+  pickupLocation: z.string().optional(),
+  dropLocation: z.string().optional(),
   seatsBooked: z.number(),
   tripType: z.enum(["one_way", "round_trip"]),
   totalFare: z.number(),
@@ -53,8 +109,11 @@ export const bookingSchema = z.object({
 
 export const insertBookingSchema = z.object({
   carId: z.string(),
+  customerId: z.string().optional(),
   customerName: z.string().min(2, "Customer name must be at least 2 characters"),
   customerPhone: z.string().min(10, "Phone number must be at least 10 digits"),
+  pickupLocation: z.string().optional(),
+  dropLocation: z.string().optional(),
   seatsBooked: z.number().min(1, "At least 1 seat must be booked"),
   tripType: z.enum(["one_way", "round_trip"]),
 });
@@ -75,3 +134,12 @@ export const insertUserSchema = z.object({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = z.infer<typeof userSchema>;
+
+export const loginSchema = z.object({
+  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+});
+
+export const otpVerifySchema = z.object({
+  mobile: z.string().min(10),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+});

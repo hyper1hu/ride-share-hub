@@ -1,4 +1,5 @@
 import express from "express";
+import session from "express-session";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import path from "path";
@@ -6,6 +7,18 @@ import path from "path";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || "rideshare-secret-key-change-in-production",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: "lax",
+  },
+}));
 
 const httpServer = createServer(app);
 

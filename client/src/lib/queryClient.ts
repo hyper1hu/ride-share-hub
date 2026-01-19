@@ -16,6 +16,7 @@ export async function apiRequest(
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
+    credentials: "include",
   });
   await throwIfResNotOk(res);
   return res;
@@ -25,7 +26,9 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: async ({ queryKey }) => {
-        const res = await fetch(queryKey[0] as string);
+        const res = await fetch(queryKey[0] as string, {
+          credentials: "include",
+        });
         await throwIfResNotOk(res);
         return res.json();
       },

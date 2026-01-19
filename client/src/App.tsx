@@ -4,9 +4,11 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { AuthProvider } from "@/lib/auth";
 import Home from "@/pages/home";
 import Customer from "@/pages/customer";
 import Driver from "@/pages/driver";
+import DriverRegister from "@/pages/driver-register";
 import Admin from "@/pages/admin";
 
 function Router() {
@@ -15,6 +17,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/customer" component={Customer} />
       <Route path="/driver" component={Driver} />
+      <Route path="/driver/register" component={DriverRegister} />
       <Route path="/admin" component={Admin} />
       <Route>
         <div className="min-h-screen flex items-center justify-center">
@@ -29,10 +32,12 @@ function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

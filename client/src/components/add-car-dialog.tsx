@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, Search, Navigation } from "lucide-react";
+import { Loader2, Search, Navigation, Plus, X, Route } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertCarSchema, vehicleTypes, type InsertCar } from "@shared/schema";
@@ -115,19 +116,51 @@ function LocationField({ value, onChange, label, placeholder, testId, variant = 
 
 export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
   const { toast } = useToast();
+  const [waypoints, setWaypoints] = useState<string[]>([]);
+  const [newWaypoint, setNewWaypoint] = useState("");
+  const [showWaypointSuggestions, setShowWaypointSuggestions] = useState(false);
 
   const form = useForm<InsertCar>({
     resolver: zodResolver(insertCarSchema),
-    defaultValues: { vehicleType: "car", driverName: "", driverPhone: "", carModel: "", carNumber: "", origin: "", destination: "", fare: 0, returnFare: 0, departureTime: "", returnTime: "", seatsAvailable: 4 },
+    defaultValues: { vehicleType: "car", driverName: "", driverPhone: "", carModel: "", carNumber: "", origin: "", destination: "", waypoints: [], fare: 0, returnFare: 0, departureTime: "", returnTime: "", seatsAvailable: 4 },
   });
 
+  const addWaypoint = () => {
+    if (newWaypoint.trim() && !waypoints.includes(newWaypoint.trim())) {
+      const updated = [...waypoints, newWaypoint.trim()];
+      setWaypoints(updated);
+      form.setValue("waypoints", updated);
+      setNewWaypoint("");
+    }
+  };
+
+  const removeWaypoint = (index: number) => {
+    const updated = waypoints.filter((_, i) => i !== index);
+    setWaypoints(updated);
+    form.setValue("waypoints", updated);
+  };
+
   const mutation = useMutation({
-    mutationFn: async (data: InsertCar) => { const res = await apiRequest("POST", "/api/cars", data); return res.json(); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/cars"] }); toast({ title: "Vehicle listed successfully", description: "Your vehicle is now available for bookings." }); form.reset(); onOpenChange(false); },
-    onError: () => { toast({ title: "Error", description: "Failed to add vehicle. Please try again.", variant: "destructive" }); },
+    mutationFn: async (data: InsertCar) => { 
+      const res = await apiRequest("POST", "/api/cars", { ...data, waypoints }); 
+      return res.json(); 
+    },
+    onSuccess: () => { 
+      queryClient.invalidateQueries({ queryKey: ["/api/cars"] }); 
+      toast({ title: "Vehicle listed successfully", description: "Your vehicle is now available for bookings." }); 
+      form.reset(); 
+      setWaypoints([]);
+      onOpenChange(false); 
+    },
+    onError: (error: any) => { 
+      const message = error?.message || "Failed to add vehicle. Please try again.";
+      toast({ title: "Error", description: message, variant: "destructive" }); 
+    },
   });
 
   const onSubmit = (data: InsertCar) => { mutation.mutate(data); };
+  
+  const waypointSuggestions = searchLocations(newWaypoint);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -177,6 +210,80 @@ export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
                   variant="drop"
                 />
               )} />
+            </div>
+            
+            <div className="space-y-3 p-4 bg-muted/30 rounded-xl border border-border/50">
+              <div className="flex items-center gap-2">
+                <Route className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">Intermediate Stops (Optional)</span>
+              </div>
+              <FormDescription className="text-xs">
+                Add stops along your route. Passengers traveling to these locations can book your ride.
+              </FormDescription>
+              
+              {waypoints.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {waypoints.map((wp, index) => (
+                    <Badge key={index} variant="secondary" className="gap-1 pr-1">
+                      {wp}
+                      <button 
+                        type="button" 
+                        onClick={() => removeWaypoint(index)}
+                        className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              
+              <div className="relative">
+                <Input 
+                  placeholder="Add a stop (e.g., Siliguri, Asansol)"
+                  value={newWaypoint}
+                  onChange={(e) => setNewWaypoint(e.target.value)}
+                  onFocus={() => setShowWaypointSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowWaypointSuggestions(false), 200)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addWaypoint(); } }}
+                  className="pr-20"
+                  data-testid="input-waypoint"
+                />
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="secondary"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7"
+                  onClick={addWaypoint}
+                  disabled={!newWaypoint.trim()}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add
+                </Button>
+                
+                {showWaypointSuggestions && newWaypoint && waypointSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
+                    {waypointSuggestions.slice(0, 5).map((location, index) => {
+                      const Icon = location.icon;
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-accent/50"
+                          onMouseDown={(e) => { 
+                            e.preventDefault(); 
+                            setNewWaypoint(location.name);
+                            setShowWaypointSuggestions(false);
+                          }}
+                        >
+                          <Icon className="h-3 w-3 text-muted-foreground" />
+                          <span className="truncate">{location.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="fare" render={({ field }) => (<FormItem><FormLabel>One Way Fare (₹)</FormLabel><FormControl><Input type="number" min={1} placeholder="500" {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-fare" /></FormControl><FormMessage /></FormItem>)} />

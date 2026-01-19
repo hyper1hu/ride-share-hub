@@ -1,29 +1,56 @@
-import { type User, type InsertUser, type Car, type InsertCar, type Booking, type InsertBooking } from "@shared/schema";
+import { 
+  type User, type InsertUser, 
+  type Car, type InsertCar, 
+  type Booking, type InsertBooking,
+  type Customer, type InsertCustomer,
+  type Driver, type InsertDriver,
+  type DriverVerificationStatus
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  getCustomer(id: string): Promise<Customer | undefined>;
+  getCustomerByMobile(mobile: string): Promise<Customer | undefined>;
+  getCustomers(): Promise<Customer[]>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  
+  getDriver(id: string): Promise<Driver | undefined>;
+  getDriverByMobile(mobile: string): Promise<Driver | undefined>;
+  getDrivers(): Promise<Driver[]>;
+  getDriversByStatus(status: DriverVerificationStatus): Promise<Driver[]>;
+  createDriver(driver: InsertDriver): Promise<Driver>;
+  updateDriver(id: string, driver: Partial<Driver>): Promise<Driver | undefined>;
+  
   getCars(): Promise<Car[]>;
   getCar(id: string): Promise<Car | undefined>;
+  getCarsByDriverId(driverId: string): Promise<Car[]>;
   createCar(car: InsertCar): Promise<Car>;
   updateCar(id: string, car: Partial<Car>): Promise<Car | undefined>;
   deleteCar(id: string): Promise<boolean>;
+  
   getBookings(): Promise<Booking[]>;
   getBooking(id: string): Promise<Booking | undefined>;
   getBookingsByCarId(carId: string): Promise<Booking[]>;
+  getBookingsByCustomerId(customerId: string): Promise<Booking[]>;
   createBooking(booking: InsertBooking, totalFare: number): Promise<Booking>;
   updateBooking(id: string, booking: Partial<Booking>): Promise<Booking | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
+  private customers: Map<string, Customer>;
+  private drivers: Map<string, Driver>;
   private cars: Map<string, Car>;
   private bookings: Map<string, Booking>;
 
   constructor() {
     this.users = new Map();
+    this.customers = new Map();
+    this.drivers = new Map();
     this.cars = new Map();
     this.bookings = new Map();
   }
@@ -45,6 +72,75 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  async getCustomer(id: string): Promise<Customer | undefined> {
+    return this.customers.get(id);
+  }
+
+  async getCustomerByMobile(mobile: string): Promise<Customer | undefined> {
+    return Array.from(this.customers.values()).find(
+      (customer) => customer.mobile === mobile
+    );
+  }
+
+  async getCustomers(): Promise<Customer[]> {
+    return Array.from(this.customers.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
+    const id = randomUUID();
+    const customer: Customer = {
+      ...insertCustomer,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.customers.set(id, customer);
+    return customer;
+  }
+
+  async getDriver(id: string): Promise<Driver | undefined> {
+    return this.drivers.get(id);
+  }
+
+  async getDriverByMobile(mobile: string): Promise<Driver | undefined> {
+    return Array.from(this.drivers.values()).find(
+      (driver) => driver.mobile === mobile
+    );
+  }
+
+  async getDrivers(): Promise<Driver[]> {
+    return Array.from(this.drivers.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getDriversByStatus(status: DriverVerificationStatus): Promise<Driver[]> {
+    return Array.from(this.drivers.values())
+      .filter((driver) => driver.verificationStatus === status)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async createDriver(insertDriver: InsertDriver): Promise<Driver> {
+    const id = randomUUID();
+    const driver: Driver = {
+      ...insertDriver,
+      id,
+      verificationStatus: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    this.drivers.set(id, driver);
+    return driver;
+  }
+
+  async updateDriver(id: string, updates: Partial<Driver>): Promise<Driver | undefined> {
+    const driver = this.drivers.get(id);
+    if (!driver) return undefined;
+    const updatedDriver = { ...driver, ...updates };
+    this.drivers.set(id, updatedDriver);
+    return updatedDriver;
+  }
+
   async getCars(): Promise<Car[]> {
     return Array.from(this.cars.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -55,11 +151,19 @@ export class MemStorage implements IStorage {
     return this.cars.get(id);
   }
 
+  async getCarsByDriverId(driverId: string): Promise<Car[]> {
+    return Array.from(this.cars.values())
+      .filter((car) => car.driverId === driverId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async createCar(insertCar: InsertCar): Promise<Car> {
     const id = randomUUID();
     const car: Car = {
       ...insertCar,
       id,
+      driverId: insertCar.driverId || "",
+      waypoints: insertCar.waypoints || [],
       status: "available",
       createdAt: new Date().toISOString(),
     };
@@ -95,11 +199,18 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getBookingsByCustomerId(customerId: string): Promise<Booking[]> {
+    return Array.from(this.bookings.values())
+      .filter((booking) => booking.customerId === customerId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async createBooking(insertBooking: InsertBooking, totalFare: number): Promise<Booking> {
     const id = randomUUID();
     const booking: Booking = {
       ...insertBooking,
       id,
+      customerId: insertBooking.customerId || "",
       totalFare,
       status: "confirmed",
       createdAt: new Date().toISOString(),

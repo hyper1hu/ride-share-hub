@@ -31,13 +31,18 @@ export default function Customer() {
   const [selectedCar, setSelectedCar] = useState<CarType | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
 
-  const { data: cars = [], isLoading } = useQuery<CarType[]>({ queryKey: ["/api/cars"] });
+  const searchParams = new URLSearchParams();
+  if (searchOrigin) searchParams.set("origin", searchOrigin);
+  if (searchDestination) searchParams.set("destination", searchDestination);
+  const searchQuery = searchParams.toString();
 
-  const availableCars = cars.filter((car) => car.status === "available");
-  const filteredCars = availableCars.filter((car) => {
-    const matchOrigin = searchOrigin ? car.origin.toLowerCase().includes(searchOrigin.toLowerCase()) : true;
-    const matchDestination = searchDestination ? car.destination.toLowerCase().includes(searchDestination.toLowerCase()) : true;
-    return matchOrigin && matchDestination;
+  const { data: filteredCars = [], isLoading } = useQuery<CarType[]>({ 
+    queryKey: ["/api/cars/search", searchOrigin, searchDestination],
+    queryFn: async () => {
+      const url = searchQuery ? `/api/cars/search?${searchQuery}` : "/api/cars/search";
+      const res = await fetch(url, { credentials: "include" });
+      return res.json();
+    }
   });
 
   const handleBookClick = (car: CarType) => {
