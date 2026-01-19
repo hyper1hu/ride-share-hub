@@ -95,9 +95,9 @@ class _AddCarDialogState extends State<AddCarDialog> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(_fareController, 'One Way Fare (\$)', Icons.attach_money, isNumber: true)),
+                    Expanded(child: _buildTextField(_fareController, 'One Way Fare (₹)', Icons.currency_rupee, isNumber: true)),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(_returnFareController, 'Return Fare (\$)', Icons.attach_money, isNumber: true)),
+                    Expanded(child: _buildTextField(_returnFareController, 'Return Fare (₹)', Icons.currency_rupee, isNumber: true)),
                   ],
                 ),
                 const SizedBox(height: 12),

@@ -4,8 +4,21 @@ import '../providers/app_provider.dart';
 import '../models/car.dart';
 import '../widgets/add_car_dialog.dart';
 
-class DriverScreen extends StatelessWidget {
+class DriverScreen extends StatefulWidget {
   const DriverScreen({super.key});
+
+  @override
+  State<DriverScreen> createState() => _DriverScreenState();
+}
+
+class _DriverScreenState extends State<DriverScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppProvider>().fetchCars();
+    });
+  }
 
   IconData _getVehicleIcon(String type) {
     switch (type) {
@@ -14,8 +27,14 @@ class DriverScreen extends StatelessWidget {
         return Icons.directions_bus;
       case 'motorcycle':
         return Icons.two_wheeler;
+      case 'auto_rickshaw':
+        return Icons.electric_rickshaw;
       case 'truck':
         return Icons.local_shipping;
+      case 'suv':
+        return Icons.directions_car_filled;
+      case 'van':
+        return Icons.airport_shuttle;
       default:
         return Icons.directions_car;
     }
@@ -25,7 +44,87 @@ class DriverScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appProvider = Provider.of<AppProvider>(context);
+    final driver = appProvider.driver;
     final cars = appProvider.cars;
+
+    if (!appProvider.isDriverLoggedIn || driver == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Driver Dashboard')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                const SizedBox(height: 24),
+                Text('Login Required', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: 8),
+                Text(
+                  'Please login or register to access your driver dashboard.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                ),
+                const SizedBox(height: 32),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+                  icon: const Icon(Icons.login),
+                  label: const Text('Login / Register'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (!driver.isApproved) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Driver Dashboard'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+            ),
+          ],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  driver.isPending ? Icons.hourglass_empty : Icons.cancel,
+                  size: 64,
+                  color: driver.isPending ? Colors.orange : Colors.red,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  driver.isPending ? 'Verification Pending' : 'Verification Rejected',
+                  style: theme.textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  driver.isPending
+                      ? 'Your registration is being reviewed by our admin team. You will be able to list vehicles once approved.'
+                      : 'Your registration was rejected. Please contact support for assistance.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                ),
+                const SizedBox(height: 32),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+                  icon: const Icon(Icons.person),
+                  label: const Text('View Profile'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -40,6 +139,10 @@ class DriverScreen extends StatelessWidget {
           IconButton(
             icon: Icon(appProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => appProvider.toggleTheme(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => Navigator.pushNamed(context, '/driver-register'),
           ),
         ],
       ),
@@ -57,8 +160,9 @@ class DriverScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text('No vehicles listed yet', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text('Start earning by listing your vehicle.',
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  Text('Welcome ${driver.name}! Start earning by listing your vehicle.',
+                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      textAlign: TextAlign.center),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: () => _showAddCarDialog(context),
@@ -156,42 +260,28 @@ class _DriverCarCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+            _InfoRow(icon: Icons.location_on, text: '${car.origin} → ${car.destination}'),
+            const SizedBox(height: 8),
+            _InfoRow(icon: Icons.access_time, text: 'Departs ${car.departureTime}, Returns ${car.returnTime}'),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _InfoRow(icon: Icons.location_on, text: '${car.origin} to ${car.destination}'),
-                      const SizedBox(height: 8),
-                      _InfoRow(icon: Icons.access_time, text: 'Departs ${car.departureTime}, Returns ${car.returnTime}'),
-                      const SizedBox(height: 8),
-                      _InfoRow(icon: Icons.phone, text: car.driverPhone),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _InfoRow(icon: Icons.event_seat, text: '$availableSeats of ${car.seatsAvailable} seats available'),
-                      const SizedBox(height: 8),
-                      Text('One Way: \$${car.fare.toStringAsFixed(0)}  |  Round Trip: \$${(car.fare + car.returnFare).toStringAsFixed(0)}'),
-                      const SizedBox(height: 8),
-                      if (bookings.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('${bookings.length} booking${bookings.length != 1 ? 's' : ''}'),
-                        ),
-                    ],
-                  ),
-                ),
+                Expanded(child: _InfoRow(icon: Icons.event_seat, text: '$availableSeats of ${car.seatsAvailable} seats')),
+                Text('₹${car.fare.toStringAsFixed(0)} / ₹${(car.fare + car.returnFare).toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
+            if (bookings.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${bookings.length} booking${bookings.length != 1 ? 's' : ''}'),
+              ),
+            ],
           ],
         ),
       ),
@@ -203,7 +293,7 @@ class _DriverCarCard extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove vehicle listing?'),
-        content: const Text('This will remove your vehicle listing and any pending bookings. This action cannot be undone.'),
+        content: const Text('This will remove your vehicle listing. This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

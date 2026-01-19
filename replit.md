@@ -106,13 +106,47 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 ## Development Commands
 - `npm run dev` - Start development server on port 5000
 
+## Flutter Mobile App
+
+A complete Flutter mobile app is available in `flutter_rideshare/` folder with:
+
+### Structure
+```
+flutter_rideshare/
+├── lib/
+│   ├── main.dart                    # App entry with routes
+│   ├── data/locations.dart          # 441+ West Bengal locations
+│   ├── models/                      # Car, Booking, Customer, Driver
+│   ├── providers/app_provider.dart  # State management with auth
+│   ├── screens/                     # Home, Customer, Driver, DriverRegister
+│   ├── services/                    # API client, GPS location
+│   └── widgets/                     # Dialogs and reusable components
+├── pubspec.yaml                     # Dependencies
+└── README.md                        # Setup instructions
+```
+
+### Running the Mobile App
+```bash
+cd flutter_rideshare
+flutter pub get
+flutter run
+```
+
+### Features
+- All 8 vehicle types with icons
+- GPS location detection for pickup suggestions
+- Driver registration with Aadhaar/license
+- Customer auth with mobile number
+- Route matching (partial routes)
+- Dark/light theme toggle
+- Material 3 design
+
 ## Recent Changes (January 2026)
-- Added "Use Current Location" feature with GPS detection for smart pickup point suggestions
-- Added smart search with aliases (type "airport" to find Kolkata Airport, "beach" for Digha, etc.)
-- Added 441+ comprehensive West Bengal locations covering all 23 districts
-- Changed currency from dollars ($) to Indian Rupees (₹)
-- Added support for 8 vehicle types (car, SUV, van, bus, minibus, motorcycle, auto rickshaw, truck)
-- Increased max seats to 60 for buses
-- Updated UI with vehicle type badges and icons
-- Flutter mobile app structure available in flutter_rideshare/ folder
-- All core functionality tested and working
+- Created comprehensive Flutter mobile app (15 Dart files)
+- Added GPS location service with geolocator
+- Added driver registration screen with verification flow
+- Added customer authentication flow in booking
+- Updated all prices to Indian Rupees (₹)
+- Added 441+ comprehensive West Bengal locations
+- Added support for 8 vehicle types
+- All core web and mobile functionality tested and working

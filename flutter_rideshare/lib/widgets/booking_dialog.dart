@@ -83,7 +83,7 @@ class _BookingDialogState extends State<BookingDialog> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Total: \$${_totalFare.toStringAsFixed(0)}', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text('Total: ₹${_totalFare.toStringAsFixed(0)}', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
@@ -182,7 +182,7 @@ class _BookingDialogState extends State<BookingDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Total Fare'),
-                    Text('\$${_totalFare.toStringAsFixed(0)}',
+                    Text('₹${_totalFare.toStringAsFixed(0)}',
                         style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -247,7 +247,7 @@ class _TripTypeCard extends StatelessWidget {
           children: [
             Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
             const SizedBox(height: 4),
-            Text('\$${price.toStringAsFixed(0)}', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text('₹${price.toStringAsFixed(0)}', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           ],
         ),
       ),
