@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import Home from "@/pages/home";
 import Customer from "@/pages/customer";
 import Driver from "@/pages/driver";
+import Admin from "@/pages/admin";
 
 function Router() {
   return (
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/customer" component={Customer} />
       <Route path="/driver" component={Driver} />
+      <Route path="/admin" component={Admin} />
       <Route>
         <div className="min-h-screen flex items-center justify-center">
           <h1 className="text-2xl font-bold">Page Not Found</h1>

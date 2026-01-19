@@ -59,6 +59,7 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - `/` - Home page with role selection
 - `/customer` - Browse available rides and book seats
 - `/driver` - List cars and manage listings
+- `/admin` - Admin panel with dashboard, vehicle management, and booking overview
 
 ### Data Models
 - **Car/Vehicle**: Vehicle type, driver info, route (origin/destination), fares, timings, seats (up to 60 for buses)

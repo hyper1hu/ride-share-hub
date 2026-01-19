@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Car, Users, ArrowRight, MapPin, Clock, Shield, Star, Banknote, Route, Phone, CheckCircle2, TrendingUp, Zap, Bus, Bike, Download } from "lucide-react";
+import { Car, Users, ArrowRight, MapPin, Clock, Shield, Star, Banknote, Route, Phone, CheckCircle2, TrendingUp, Zap, Bus, Bike, Download, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -66,6 +66,12 @@ export default function Home() {
             </Link>
             <Link href="/driver">
               <Button variant="ghost" size="sm" data-testid="nav-driver">For Drivers</Button>
+            </Link>
+            <Link href="/admin">
+              <Button variant="ghost" size="sm" className="gap-1.5" data-testid="nav-admin">
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </Button>
             </Link>
             <ThemeToggle />
           </div>
