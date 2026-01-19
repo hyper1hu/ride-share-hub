@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Car, Users, ArrowRight, MapPin, Clock, Shield, Star, Banknote, Route, Phone, CheckCircle2, TrendingUp, Zap, Bus, Bike } from "lucide-react";
+import { Car, Users, ArrowRight, MapPin, Clock, Shield, Star, Banknote, Route, Phone, CheckCircle2, TrendingUp, Zap, Bus, Bike, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -411,9 +411,12 @@ export default function Home() {
               <span className="h-1 w-1 rounded-full bg-muted-foreground" />
               <span>Digha</span>
             </div>
-            <div className="text-sm text-muted-foreground">
-              Made with care for West Bengal
-            </div>
+            <a href="/download/project" download>
+              <Button variant="outline" size="sm" className="gap-2" data-testid="button-download-project">
+                <Download className="h-4 w-4" />
+                Download Source Code
+              </Button>
+            </a>
           </div>
         </div>
       </div>
