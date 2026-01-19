@@ -1,7 +1,7 @@
-# RideShare - Car Hire Application
+# RideShare - Vehicle Hire Application
 
 ## Overview
-A React-based car hire/ride-sharing application where drivers can list their cars with routes (A to B) and fares, and customers can browse and book rides. Features two main sections - one for drivers and one for customers.
+A React-based vehicle hire/ride-sharing application supporting multiple vehicle types (cars, buses, vans, motorcycles, etc.). Drivers can list vehicles with routes and fares, customers can browse and book rides. Features landmark-based location selection for easy navigation.
 
 ## Project Architecture
 
@@ -61,21 +61,31 @@ A React-based car hire/ride-sharing application where drivers can list their car
 - `/driver` - List cars and manage listings
 
 ### Data Models
-- **Car**: Driver info, route (origin/destination), fares, timings, seats
-- **Booking**: Customer info, car reference, seats booked, trip type, fare
+- **Car/Vehicle**: Vehicle type, driver info, route (origin/destination), fares, timings, seats (up to 60 for buses)
+- **Booking**: Customer info, vehicle reference, seats booked, trip type, fare
+
+### Vehicle Types Supported
+- Car, SUV, Van, Bus, Minibus, Motorcycle, Auto Rickshaw, Truck
 
 ## Features
+- **Multiple Vehicle Types**: 8 different vehicle types with appropriate icons
+- **Landmark Location Selection**: Popular landmarks dropdown for easy location input
+  - Includes: Times Square, Central Park, Empire State Building, Golden Gate Bridge, etc.
+  - Airports, train stations, parks, and famous destinations
 - Light/dark theme toggle with localStorage persistence
 - Responsive layout for web and mobile
 - In-memory data storage
 - Form validation with Zod
 - Real-time fare calculation
-- Search/filter rides by origin and destination
+- Search/filter rides by origin, destination, and landmarks
 
 ## Development Commands
 - `npm run dev` - Start development server on port 5000
 
 ## Recent Changes (January 2026)
-- Restored React application after accidental Flutter conversion attempt
-- Fixed Vite configuration for external host access
+- Added landmark-based location selection with popular destinations
+- Added support for 8 vehicle types (car, SUV, van, bus, minibus, motorcycle, auto rickshaw, truck)
+- Increased max seats to 60 for buses
+- Updated UI with vehicle type badges and icons
+- Flutter mobile app structure available in flutter_rideshare/ folder
 - All core functionality tested and working

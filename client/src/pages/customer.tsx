@@ -4,10 +4,10 @@ import { Link } from "wouter";
 import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2, Bus, Bike, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BookingDialog } from "@/components/booking-dialog";
+import { LocationInput } from "@/components/location-input";
 import type { Car as CarType } from "@shared/schema";
 
 const vehicleTypeLabels: Record<string, string> = {
@@ -60,15 +60,24 @@ export default function Customer() {
       <main className="container mx-auto px-4 py-6">
         <Card className="mb-6">
           <CardContent className="p-4">
+            <p className="text-sm text-muted-foreground mb-3">Search by popular landmarks or type your location</p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="From (origin)" value={searchOrigin} onChange={(e) => setSearchOrigin(e.target.value)} className="pl-10" data-testid="input-search-origin" />
+              <div className="flex-1">
+                <LocationInput 
+                  value={searchOrigin} 
+                  onChange={setSearchOrigin} 
+                  placeholder="From (landmark or city)"
+                  data-testid="input-search-origin"
+                />
               </div>
               <div className="flex items-center justify-center"><ArrowRight className="h-5 w-5 text-muted-foreground hidden sm:block" /></div>
-              <div className="flex-1 relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="To (destination)" value={searchDestination} onChange={(e) => setSearchDestination(e.target.value)} className="pl-10" data-testid="input-search-destination" />
+              <div className="flex-1">
+                <LocationInput 
+                  value={searchDestination} 
+                  onChange={setSearchDestination} 
+                  placeholder="To (landmark or city)"
+                  data-testid="input-search-destination"
+                />
               </div>
             </div>
           </CardContent>

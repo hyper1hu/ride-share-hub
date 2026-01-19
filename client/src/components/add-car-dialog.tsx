@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin, Building2, Landmark, TreePine, Plane, Train, Ship } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,82 @@ const vehicleTypeLabels: Record<string, string> = {
   auto_rickshaw: "Auto Rickshaw",
   truck: "Truck",
 };
+
+const popularLocations = [
+  { name: "Times Square, New York", icon: Building2 },
+  { name: "Central Park, New York", icon: TreePine },
+  { name: "Empire State Building, NYC", icon: Building2 },
+  { name: "Statue of Liberty, NYC", icon: Landmark },
+  { name: "Hollywood Sign, Los Angeles", icon: Landmark },
+  { name: "Golden Gate Bridge, San Francisco", icon: Landmark },
+  { name: "Space Needle, Seattle", icon: Building2 },
+  { name: "Willis Tower, Chicago", icon: Building2 },
+  { name: "Miami Beach, Florida", icon: Ship },
+  { name: "Las Vegas Strip, Nevada", icon: Building2 },
+  { name: "Grand Canyon, Arizona", icon: TreePine },
+  { name: "JFK Airport, New York", icon: Plane },
+  { name: "LAX Airport, Los Angeles", icon: Plane },
+  { name: "Penn Station, New York", icon: Train },
+  { name: "Boston Common, Boston", icon: TreePine },
+  { name: "Lincoln Memorial, Washington DC", icon: Landmark },
+];
+
+function LocationField({ value, onChange, label, placeholder, testId }: { 
+  value: string; 
+  onChange: (v: string) => void; 
+  label: string;
+  placeholder: string;
+  testId: string;
+}) {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const filtered = value 
+    ? popularLocations.filter(l => l.name.toLowerCase().includes(value.toLowerCase()))
+    : popularLocations;
+
+  return (
+    <FormItem className="relative">
+      <FormLabel>{label}</FormLabel>
+      <FormControl>
+        <div className="relative">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+          <Input 
+            placeholder={placeholder} 
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            className="pl-10"
+            data-testid={testId}
+          />
+          {showSuggestions && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+              <div className="p-2 border-b">
+                <p className="text-xs text-muted-foreground font-medium">Popular Landmarks</p>
+              </div>
+              <div className="p-1">
+                {filtered.slice(0, 6).map((location, index) => {
+                  const Icon = location.icon;
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left rounded-md hover-elevate"
+                      onMouseDown={(e) => { e.preventDefault(); onChange(location.name); setShowSuggestions(false); }}
+                    >
+                      <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="truncate">{location.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  );
+}
 
 export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
   const { toast } = useToast();
@@ -71,8 +148,24 @@ export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
               <FormField control={form.control} name="carNumber" render={({ field }) => (<FormItem><FormLabel>Vehicle Number</FormLabel><FormControl><Input placeholder="ABC 1234" {...field} data-testid="input-car-number" /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="origin" render={({ field }) => (<FormItem><FormLabel>From (Origin)</FormLabel><FormControl><Input placeholder="City A" {...field} data-testid="input-origin" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="destination" render={({ field }) => (<FormItem><FormLabel>To (Destination)</FormLabel><FormControl><Input placeholder="City B" {...field} data-testid="input-destination" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="origin" render={({ field }) => (
+                <LocationField 
+                  value={field.value} 
+                  onChange={field.onChange} 
+                  label="From (Origin)" 
+                  placeholder="Select landmark or type location"
+                  testId="input-origin"
+                />
+              )} />
+              <FormField control={form.control} name="destination" render={({ field }) => (
+                <LocationField 
+                  value={field.value} 
+                  onChange={field.onChange} 
+                  label="To (Destination)" 
+                  placeholder="Select landmark or type location"
+                  testId="input-destination"
+                />
+              )} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="fare" render={({ field }) => (<FormItem><FormLabel>One Way Fare ($)</FormLabel><FormControl><Input type="number" min={1} placeholder="50" {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-fare" /></FormControl><FormMessage /></FormItem>)} />
