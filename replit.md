@@ -48,18 +48,35 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 ```
 
 ### API Routes
+**Vehicles:**
 - `GET /api/cars` - List all cars
-- `POST /api/cars` - Create a car listing
+- `GET /api/cars/search?origin=X&destination=Y` - Search with route matching
+- `POST /api/cars` - Create a car listing (requires approved driver)
 - `PATCH /api/cars/:id` - Update a car
 - `DELETE /api/cars/:id` - Delete a car
+
+**Bookings:**
 - `GET /api/bookings` - List all bookings
-- `POST /api/bookings` - Create a booking
+- `POST /api/bookings` - Create a booking (requires customer login)
+
+**Customer Auth:**
+- `POST /api/auth/customer/register` - Register customer (mobile, name, age)
+- `POST /api/auth/customer/login` - Login with mobile number
+- `GET /api/auth/customer/me` - Get current customer session
+
+**Driver Auth:**
+- `POST /api/auth/driver/register` - Register driver (requires Aadhaar, license)
+- `POST /api/auth/driver/login` - Login with mobile number
+- `GET /api/auth/driver/me` - Get current driver session
+- `GET /api/drivers` - List all drivers (admin)
+- `PATCH /api/drivers/:id/verify` - Approve/reject driver (admin)
 
 ### Page Routes
 - `/` - Home page with role selection
 - `/customer` - Browse available rides and book seats
-- `/driver` - List cars and manage listings
-- `/admin` - Admin panel with dashboard, vehicle management, and booking overview
+- `/driver` - Driver dashboard to manage vehicles
+- `/driver/register` - Driver registration and login
+- `/admin` - Admin panel with dashboard, vehicle management, booking overview, and driver verification
 
 ### Data Models
 - **Car/Vehicle**: Vehicle type, driver info, route (origin/destination), fares, timings, seats (up to 60 for buses)
