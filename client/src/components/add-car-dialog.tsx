@@ -12,7 +12,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertCarSchema, vehicleTypes, type InsertCar } from "@shared/schema";
 import { cn } from "@/lib/utils";
-import { westBengalLocations } from "@/lib/locations";
+import { westBengalLocations, searchLocations } from "@/lib/locations";
 
 interface AddCarDialogProps {
   open: boolean;
@@ -39,13 +39,7 @@ function LocationField({ value, onChange, label, placeholder, testId, variant = 
   variant?: "pickup" | "drop" | "default";
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const filtered = value 
-    ? westBengalLocations.filter(l => 
-        l.name.toLowerCase().includes(value.toLowerCase()) ||
-        l.category.toLowerCase().includes(value.toLowerCase()) ||
-        l.district.toLowerCase().includes(value.toLowerCase())
-      )
-    : westBengalLocations;
+  const filtered = searchLocations(value);
 
   const getDotColor = () => {
     if (variant === "pickup") return "bg-green-500";

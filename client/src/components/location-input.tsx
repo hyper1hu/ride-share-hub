@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Search, Clock, Navigation } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { westBengalLocations } from "@/lib/locations";
+import { westBengalLocations, searchLocations } from "@/lib/locations";
 
 interface LocationInputProps {
   value: string;
@@ -38,17 +38,8 @@ export function LocationInput({ value, onChange, placeholder, className, variant
   }, []);
 
   useEffect(() => {
-    if (value) {
-      const searchTerm = value.toLowerCase();
-      const filtered = westBengalLocations.filter(loc => 
-        loc.name.toLowerCase().includes(searchTerm) ||
-        loc.category.toLowerCase().includes(searchTerm) ||
-        loc.district.toLowerCase().includes(searchTerm)
-      );
-      setFilteredLocations(filtered.length > 0 ? filtered : westBengalLocations);
-    } else {
-      setFilteredLocations(westBengalLocations);
-    }
+    const results = searchLocations(value);
+    setFilteredLocations(results.length > 0 ? results : westBengalLocations);
   }, [value]);
 
   const handleSelect = (location: string) => {
