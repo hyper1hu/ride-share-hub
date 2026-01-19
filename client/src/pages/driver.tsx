@@ -108,7 +108,7 @@ export default function Driver() {
                       </div>
                       <div className="space-y-3">
                         <div className="flex items-center gap-3"><Users className="h-4 w-4 text-muted-foreground" /><span className="text-sm"><span className="font-medium">{car.seatsAvailable - totalSeatsBooked}</span> of {car.seatsAvailable} seats available</span></div>
-                        <div className="flex items-center gap-4 text-sm"><div><span className="text-muted-foreground">One Way:</span> <span className="font-semibold">${car.fare}</span></div><div><span className="text-muted-foreground">Round Trip:</span> <span className="font-semibold">${car.fare + car.returnFare}</span></div></div>
+                        <div className="flex items-center gap-4 text-sm"><div><span className="text-muted-foreground">One Way:</span> <span className="font-semibold">₹{car.fare}</span></div><div><span className="text-muted-foreground">Round Trip:</span> <span className="font-semibold">₹{car.fare + car.returnFare}</span></div></div>
                         {carBookings.length > 0 && <div><Badge variant="secondary">{carBookings.length} booking{carBookings.length !== 1 ? "s" : ""}</Badge></div>}
                       </div>
                     </div>

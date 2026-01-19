@@ -66,7 +66,7 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
               <div className="flex items-center gap-2 text-sm mb-2"><Car className="h-4 w-4 text-muted-foreground" /><span>{car.carModel} - {car.driverName}</span></div>
               <div className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-muted-foreground" /><span>Departure: {car.departureTime}</span></div>
             </div>
-            <p className="font-semibold text-lg mb-4">Total: ${calculateFare()}</p>
+            <p className="font-semibold text-lg mb-4">Total: ₹{calculateFare()}</p>
             <Button onClick={handleClose} className="w-full" data-testid="button-close-booking-success">Done</Button>
           </div>
         </DialogContent>
@@ -89,12 +89,12 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
             <FormField control={form.control} name="tripType" render={({ field }) => (
               <FormItem><FormLabel>Trip Type</FormLabel><FormControl>
                 <RadioGroup value={field.value} onValueChange={field.onChange} className="grid grid-cols-2 gap-4">
-                  <div><RadioGroupItem value="one_way" id="one_way" className="peer sr-only" /><Label htmlFor="one_way" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer" data-testid="radio-one-way"><span className="text-sm font-medium">One Way</span><span className="text-lg font-bold">${car.fare * seatsBooked}</span></Label></div>
-                  <div><RadioGroupItem value="round_trip" id="round_trip" className="peer sr-only" /><Label htmlFor="round_trip" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer" data-testid="radio-round-trip"><span className="text-sm font-medium">Round Trip</span><span className="text-lg font-bold">${(car.fare + car.returnFare) * seatsBooked}</span></Label></div>
+                  <div><RadioGroupItem value="one_way" id="one_way" className="peer sr-only" /><Label htmlFor="one_way" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer" data-testid="radio-one-way"><span className="text-sm font-medium">One Way</span><span className="text-lg font-bold">₹{car.fare * seatsBooked}</span></Label></div>
+                  <div><RadioGroupItem value="round_trip" id="round_trip" className="peer sr-only" /><Label htmlFor="round_trip" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer" data-testid="radio-round-trip"><span className="text-sm font-medium">Round Trip</span><span className="text-lg font-bold">₹{(car.fare + car.returnFare) * seatsBooked}</span></Label></div>
                 </RadioGroup>
               </FormControl><FormMessage /></FormItem>
             )} />
-            <div className="bg-muted/50 rounded-lg p-4"><div className="flex justify-between items-center"><span className="text-muted-foreground">Total Fare</span><span className="text-2xl font-bold">${calculateFare()}</span></div></div>
+            <div className="bg-muted/50 rounded-lg p-4"><div className="flex justify-between items-center"><span className="text-muted-foreground">Total Fare</span><span className="text-2xl font-bold">₹{calculateFare()}</span></div></div>
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" className="flex-1" onClick={handleClose} data-testid="button-cancel-booking">Cancel</Button>
               <Button type="submit" className="flex-1" disabled={mutation.isPending} data-testid="button-confirm-booking">{mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm Booking"}</Button>

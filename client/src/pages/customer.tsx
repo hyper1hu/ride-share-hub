@@ -129,8 +129,8 @@ export default function Customer() {
                         </div>
                         <div className="flex flex-col items-end gap-3">
                           <div className="text-right">
-                            <div className="flex items-center gap-2"><Badge variant="secondary">One Way</Badge><span className="font-bold text-lg">${car.fare}</span></div>
-                            <div className="flex items-center gap-2 mt-1"><Badge variant="outline">Round Trip</Badge><span className="font-semibold text-muted-foreground">${car.fare + car.returnFare}</span></div>
+                            <div className="flex items-center gap-2"><Badge variant="secondary">One Way</Badge><span className="font-bold text-lg">₹{car.fare}</span></div>
+                            <div className="flex items-center gap-2 mt-1"><Badge variant="outline">Round Trip</Badge><span className="font-semibold text-muted-foreground">₹{car.fare + car.returnFare}</span></div>
                           </div>
                           <Button onClick={() => handleBookClick(car)} data-testid={`button-book-${car.id}`}>Book Now</Button>
                         </div>

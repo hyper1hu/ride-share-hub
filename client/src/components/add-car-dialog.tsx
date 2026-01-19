@@ -29,22 +29,28 @@ const vehicleTypeLabels: Record<string, string> = {
 };
 
 const popularLocations = [
-  { name: "Times Square, New York", icon: Building2 },
-  { name: "Central Park, New York", icon: TreePine },
-  { name: "Empire State Building, NYC", icon: Building2 },
-  { name: "Statue of Liberty, NYC", icon: Landmark },
-  { name: "Hollywood Sign, Los Angeles", icon: Landmark },
-  { name: "Golden Gate Bridge, San Francisco", icon: Landmark },
-  { name: "Space Needle, Seattle", icon: Building2 },
-  { name: "Willis Tower, Chicago", icon: Building2 },
-  { name: "Miami Beach, Florida", icon: Ship },
-  { name: "Las Vegas Strip, Nevada", icon: Building2 },
-  { name: "Grand Canyon, Arizona", icon: TreePine },
-  { name: "JFK Airport, New York", icon: Plane },
-  { name: "LAX Airport, Los Angeles", icon: Plane },
-  { name: "Penn Station, New York", icon: Train },
-  { name: "Boston Common, Boston", icon: TreePine },
-  { name: "Lincoln Memorial, Washington DC", icon: Landmark },
+  // West Bengal
+  { name: "Howrah Station, Kolkata", icon: Train },
+  { name: "Sealdah Station, Kolkata", icon: Train },
+  { name: "Victoria Memorial, Kolkata", icon: Landmark },
+  { name: "Dakshineswar Temple, Kolkata", icon: Landmark },
+  { name: "Kalighat Temple, Kolkata", icon: Landmark },
+  { name: "Science City, Kolkata", icon: Building2 },
+  { name: "Park Street, Kolkata", icon: Building2 },
+  { name: "Salt Lake City, Kolkata", icon: Building2 },
+  { name: "Netaji Subhas Airport, Kolkata", icon: Plane },
+  { name: "New Town, Kolkata", icon: Building2 },
+  { name: "Digha Beach, West Bengal", icon: Ship },
+  { name: "Darjeeling, West Bengal", icon: TreePine },
+  { name: "Siliguri, West Bengal", icon: Building2 },
+  { name: "Durgapur, West Bengal", icon: Building2 },
+  { name: "Sundarbans, West Bengal", icon: TreePine },
+  { name: "Shantiniketan, West Bengal", icon: Landmark },
+  // Other Major Indian Cities
+  { name: "India Gate, Delhi", icon: Landmark },
+  { name: "Gateway of India, Mumbai", icon: Landmark },
+  { name: "Taj Mahal, Agra", icon: Landmark },
+  { name: "Charminar, Hyderabad", icon: Landmark },
 ];
 
 function LocationField({ value, onChange, label, placeholder, testId }: { 
@@ -168,8 +174,8 @@ export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
               )} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="fare" render={({ field }) => (<FormItem><FormLabel>One Way Fare ($)</FormLabel><FormControl><Input type="number" min={1} placeholder="50" {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-fare" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="returnFare" render={({ field }) => (<FormItem><FormLabel>Return Fare ($)</FormLabel><FormControl><Input type="number" min={1} placeholder="45" {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-return-fare" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="fare" render={({ field }) => (<FormItem><FormLabel>One Way Fare (₹)</FormLabel><FormControl><Input type="number" min={1} placeholder="500" {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-fare" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="returnFare" render={({ field }) => (<FormItem><FormLabel>Return Fare (₹)</FormLabel><FormControl><Input type="number" min={1} placeholder="450" {...field} onChange={(e) => field.onChange(Number(e.target.value))} data-testid="input-return-fare" /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="departureTime" render={({ field }) => (<FormItem><FormLabel>Departure Time</FormLabel><FormControl><Input type="time" {...field} data-testid="input-departure-time" /></FormControl><FormMessage /></FormItem>)} />
