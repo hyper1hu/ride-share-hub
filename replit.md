@@ -69,9 +69,15 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 
 ## Features
 - **Multiple Vehicle Types**: 8 different vehicle types with appropriate icons
-- **Landmark Location Selection**: Popular landmarks dropdown for easy location input
-  - Includes: Times Square, Central Park, Empire State Building, Golden Gate Bridge, etc.
-  - Airports, train stations, parks, and famous destinations
+- **Landmark Location Selection**: 90+ West Bengal and Indian locations for easy selection
+  - **Kolkata**: Howrah Station, Sealdah Station, Victoria Memorial, Dakshineswar, Kalighat, Science City, Park Street, Salt Lake, New Town, Gariahat, Behala, Jadavpur, Dumdum, Barasat
+  - **North Bengal**: Darjeeling, Siliguri, NJP Station, Bagdogra Airport, Kalimpong, Kurseong, Mirik, Jalpaiguri, Cooch Behar, Alipurduar, Dooars, Jaldapara
+  - **Beaches**: Digha, Mandarmani, Tajpur, Bakkhali, Diamond Harbour
+  - **Central Bengal**: Durgapur, Asansol, Bardhaman, Bankura, Bishnupur, Purulia, Hooghly, Chandannagar
+  - **Religious/Cultural**: Shantiniketan, Nabadwip, Mayapur, Murshidabad, Belur Math
+  - **Other Districts**: Malda, Kharagpur, Haldia, Nadia, Birbhum
+  - **Nearby States**: Patna (Bihar), Ranchi (Jharkhand), Bhubaneswar (Odisha), Guwahati (Assam)
+- **Currency**: Indian Rupees (₹) for all fares
 - Light/dark theme toggle with localStorage persistence
 - Responsive layout for web and mobile
 - In-memory data storage
@@ -83,7 +89,8 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - `npm run dev` - Start development server on port 5000
 
 ## Recent Changes (January 2026)
-- Added landmark-based location selection with popular destinations
+- Added 90+ West Bengal and Indian landmark locations
+- Changed currency from dollars ($) to Indian Rupees (₹)
 - Added support for 8 vehicle types (car, SUV, van, bus, minibus, motorcycle, auto rickshaw, truck)
 - Increased max seats to 60 for buses
 - Updated UI with vehicle type badges and icons

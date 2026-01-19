@@ -29,28 +29,73 @@ const vehicleTypeLabels: Record<string, string> = {
 };
 
 const popularLocations = [
-  // West Bengal
+  // Kolkata & Howrah
   { name: "Howrah Station, Kolkata", icon: Train },
   { name: "Sealdah Station, Kolkata", icon: Train },
+  { name: "Netaji Subhas Airport, Kolkata", icon: Plane },
   { name: "Victoria Memorial, Kolkata", icon: Landmark },
   { name: "Dakshineswar Temple, Kolkata", icon: Landmark },
   { name: "Kalighat Temple, Kolkata", icon: Landmark },
+  { name: "Belur Math, Howrah", icon: Landmark },
   { name: "Science City, Kolkata", icon: Building2 },
+  { name: "Eco Park, New Town", icon: TreePine },
   { name: "Park Street, Kolkata", icon: Building2 },
   { name: "Salt Lake City, Kolkata", icon: Building2 },
-  { name: "Netaji Subhas Airport, Kolkata", icon: Plane },
   { name: "New Town, Kolkata", icon: Building2 },
-  { name: "Digha Beach, West Bengal", icon: Ship },
+  { name: "Esplanade, Kolkata", icon: Building2 },
+  { name: "Gariahat, Kolkata", icon: Building2 },
+  { name: "Behala, Kolkata", icon: Building2 },
+  { name: "Jadavpur, Kolkata", icon: Building2 },
+  { name: "Dumdum, Kolkata", icon: Building2 },
+  { name: "Barasat, North 24 Parganas", icon: Building2 },
+  // North Bengal
   { name: "Darjeeling, West Bengal", icon: TreePine },
   { name: "Siliguri, West Bengal", icon: Building2 },
+  { name: "New Jalpaiguri Station (NJP)", icon: Train },
+  { name: "Bagdogra Airport, Siliguri", icon: Plane },
+  { name: "Kalimpong, West Bengal", icon: TreePine },
+  { name: "Kurseong, West Bengal", icon: TreePine },
+  { name: "Mirik, West Bengal", icon: TreePine },
+  { name: "Jalpaiguri, West Bengal", icon: Building2 },
+  { name: "Cooch Behar, West Bengal", icon: Building2 },
+  { name: "Alipurduar, West Bengal", icon: Building2 },
+  { name: "Dooars, West Bengal", icon: TreePine },
+  // South Bengal - Beaches
+  { name: "Digha Beach, East Midnapore", icon: Ship },
+  { name: "Mandarmani Beach, East Midnapore", icon: Ship },
+  { name: "Tajpur Beach, East Midnapore", icon: Ship },
+  { name: "Bakkhali Beach, South 24 Parganas", icon: Ship },
+  { name: "Sundarbans, South 24 Parganas", icon: TreePine },
+  { name: "Diamond Harbour, South 24 Parganas", icon: Ship },
+  { name: "Haldia, East Midnapore", icon: Building2 },
+  { name: "Kharagpur, West Midnapore", icon: Train },
+  // Central Bengal
   { name: "Durgapur, West Bengal", icon: Building2 },
-  { name: "Sundarbans, West Bengal", icon: TreePine },
-  { name: "Shantiniketan, West Bengal", icon: Landmark },
-  // Other Major Indian Cities
+  { name: "Asansol, West Bengal", icon: Building2 },
+  { name: "Bardhaman (Burdwan), West Bengal", icon: Building2 },
+  { name: "Bankura, West Bengal", icon: Building2 },
+  { name: "Bishnupur, Bankura", icon: Landmark },
+  { name: "Purulia, West Bengal", icon: Building2 },
+  { name: "Shantiniketan, Birbhum", icon: Landmark },
+  { name: "Bolpur, Birbhum", icon: Train },
+  { name: "Nabadwip, Nadia", icon: Landmark },
+  { name: "Mayapur, Nadia", icon: Landmark },
+  { name: "Krishnanagar, Nadia", icon: Building2 },
+  // More Districts
+  { name: "Malda, West Bengal", icon: Building2 },
+  { name: "Murshidabad, West Bengal", icon: Landmark },
+  { name: "Berhampore, Murshidabad", icon: Building2 },
+  { name: "Raiganj, Uttar Dinajpur", icon: Building2 },
+  // Major Bus Stands
+  { name: "Esplanade Bus Stand, Kolkata", icon: Building2 },
+  { name: "Babughat Bus Stand, Kolkata", icon: Building2 },
+  // Other Indian Cities
   { name: "India Gate, Delhi", icon: Landmark },
   { name: "Gateway of India, Mumbai", icon: Landmark },
-  { name: "Taj Mahal, Agra", icon: Landmark },
-  { name: "Charminar, Hyderabad", icon: Landmark },
+  { name: "Patna, Bihar", icon: Building2 },
+  { name: "Ranchi, Jharkhand", icon: Building2 },
+  { name: "Bhubaneswar, Odisha", icon: Building2 },
+  { name: "Guwahati, Assam", icon: Building2 },
 ];
 
 function LocationField({ value, onChange, label, placeholder, testId }: { 
