@@ -74,6 +74,9 @@ async function buildAll() {
     minify: true,
     external: externals,
     logLevel: "info",
+    banner: {
+      js: 'var import_meta_url = "file://" + __filename;',
+    },
   });
 }
 

@@ -13,10 +13,6 @@ const httpServer = createServer(app);
   await registerRoutes(httpServer, app);
 
   if (process.env.NODE_ENV === "development") {
-    const { fileURLToPath } = await import("url");
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true, allowedHosts: true },
@@ -24,8 +20,8 @@ const httpServer = createServer(app);
       root: "client",
       resolve: {
         alias: {
-          "@": path.resolve(__dirname, "../client/src"),
-          "@shared": path.resolve(__dirname, "../shared"),
+          "@": path.resolve(process.cwd(), "client/src"),
+          "@shared": path.resolve(process.cwd(), "shared"),
         },
       },
     });
