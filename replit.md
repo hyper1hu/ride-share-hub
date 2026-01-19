@@ -1,55 +1,50 @@
-# RideShare - Car Hire Application
+# RideShare - Flutter Car Hire Application
 
 ## Overview
-A car hire/ride-sharing application where drivers can list their cars with routes (A to B) and fares, and customers can browse and book rides. The app features two main sections - one for drivers and one for customers.
-
-## Recent Changes
-- Initial MVP implementation (Jan 2026)
-  - Created schema for cars, bookings
-  - Built home page with role selection
-  - Built driver dashboard to list/manage cars
-  - Built customer page to browse/book rides
-  - Implemented in-memory storage backend
+A Flutter car hire/ride-sharing application where drivers can list their cars with routes (A to B) and fares, and customers can browse and book rides. Features two main sections - one for drivers and one for customers.
 
 ## Project Architecture
 
-### Frontend (client/)
-- **Framework**: React with TypeScript
-- **Routing**: wouter
-- **State Management**: TanStack Query
-- **Styling**: Tailwind CSS with shadcn/ui components
-- **Theme**: Light/dark mode with ThemeProvider
+### Framework
+- **Flutter** with Material Design 3
+- **State Management**: Provider
+- **Navigation**: Flutter Navigator routes
 
-### Pages
-- `/` - Home page with role selection (Driver/Customer)
+### Directory Structure
+```
+lib/
+├── main.dart              # App entry point, theming, routes
+├── models/
+│   ├── car.dart           # Car data model
+│   └── booking.dart       # Booking data model
+├── services/
+│   └── data_service.dart  # In-memory data management
+├── screens/
+│   ├── home_screen.dart   # Landing page with role selection
+│   ├── customer_screen.dart # Browse and book rides
+│   └── driver_screen.dart # List and manage cars
+└── widgets/
+    ├── add_car_dialog.dart   # Form for drivers to list cars
+    └── booking_dialog.dart   # Form for customers to book
+web/
+├── index.html             # Web entry point
+└── manifest.json          # PWA manifest
+```
+
+### Routes
+- `/` - Home page with role selection
 - `/customer` - Browse available rides and book seats
 - `/driver` - List cars and manage listings
 
-### Key Components
-- `add-car-dialog.tsx` - Form for drivers to list new cars
-- `booking-dialog.tsx` - Form for customers to book rides
-- `theme-toggle.tsx` - Dark/light mode toggle
-
-### Backend (server/)
-- **Framework**: Express.js
-- **Storage**: In-memory (MemStorage)
-- **Validation**: Zod schemas
-
-### API Endpoints
-- `GET /api/cars` - List all cars
-- `POST /api/cars` - Add new car listing
-- `DELETE /api/cars/:id` - Remove car listing
-- `GET /api/bookings` - List all bookings
-- `POST /api/bookings` - Create new booking
-
-### Data Models (shared/schema.ts)
+### Data Models
 - **Car**: Driver info, route (origin/destination), fares, timings, seats
 - **Booking**: Customer info, car reference, seats booked, trip type, fare
 
-## User Preferences
-- Clean, modern UI with blue primary color
-- Support for both light and dark themes
-- Mobile-responsive design
+## Features
+- Light/dark theme toggle
+- Material Design 3 styling
+- Responsive layout for web and mobile
+- In-memory data storage
 
 ## Development Commands
-- `npm run dev` - Start development server
+- `flutter run -d web-server --web-hostname=0.0.0.0 --web-port=5000` - Run on web
