@@ -69,7 +69,7 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 
 ## Features
 - **Multiple Vehicle Types**: 8 different vehicle types with appropriate icons
-- **Landmark Location Selection**: 90+ West Bengal and Indian locations for easy selection
+- **Landmark Location Selection**: 400+ West Bengal and Indian locations for easy selection
   - **Kolkata**: Howrah Station, Sealdah Station, Victoria Memorial, Dakshineswar, Kalighat, Science City, Park Street, Salt Lake, New Town, Gariahat, Behala, Jadavpur, Dumdum, Barasat
   - **North Bengal**: Darjeeling, Siliguri, NJP Station, Bagdogra Airport, Kalimpong, Kurseong, Mirik, Jalpaiguri, Cooch Behar, Alipurduar, Dooars, Jaldapara
   - **Beaches**: Digha, Mandarmani, Tajpur, Bakkhali, Diamond Harbour
@@ -89,7 +89,7 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - `npm run dev` - Start development server on port 5000
 
 ## Recent Changes (January 2026)
-- Added 90+ West Bengal and Indian landmark locations
+- Added 400+ comprehensive West Bengal locations covering all 23 districts
 - Changed currency from dollars ($) to Indian Rupees (₹)
 - Added support for 8 vehicle types (car, SUV, van, bus, minibus, motorcycle, auto rickshaw, truck)
 - Increased max seats to 60 for buses

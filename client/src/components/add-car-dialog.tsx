@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, Search, Building2, Landmark, TreePine, Plane, Train, Ship, Navigation } from "lucide-react";
+import { Loader2, Search, Navigation } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertCarSchema, vehicleTypes, type InsertCar } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { westBengalLocations } from "@/lib/locations";
 
 interface AddCarDialogProps {
   open: boolean;
@@ -29,76 +30,6 @@ const vehicleTypeLabels: Record<string, string> = {
   truck: "Truck",
 };
 
-const popularLocations = [
-  // Kolkata & Howrah
-  { name: "Howrah Station, Kolkata", icon: Train },
-  { name: "Sealdah Station, Kolkata", icon: Train },
-  { name: "Netaji Subhas Airport, Kolkata", icon: Plane },
-  { name: "Victoria Memorial, Kolkata", icon: Landmark },
-  { name: "Dakshineswar Temple, Kolkata", icon: Landmark },
-  { name: "Kalighat Temple, Kolkata", icon: Landmark },
-  { name: "Belur Math, Howrah", icon: Landmark },
-  { name: "Science City, Kolkata", icon: Building2 },
-  { name: "Eco Park, New Town", icon: TreePine },
-  { name: "Park Street, Kolkata", icon: Building2 },
-  { name: "Salt Lake City, Kolkata", icon: Building2 },
-  { name: "New Town, Kolkata", icon: Building2 },
-  { name: "Esplanade, Kolkata", icon: Building2 },
-  { name: "Gariahat, Kolkata", icon: Building2 },
-  { name: "Behala, Kolkata", icon: Building2 },
-  { name: "Jadavpur, Kolkata", icon: Building2 },
-  { name: "Dumdum, Kolkata", icon: Building2 },
-  { name: "Barasat, North 24 Parganas", icon: Building2 },
-  // North Bengal
-  { name: "Darjeeling, West Bengal", icon: TreePine },
-  { name: "Siliguri, West Bengal", icon: Building2 },
-  { name: "New Jalpaiguri Station (NJP)", icon: Train },
-  { name: "Bagdogra Airport, Siliguri", icon: Plane },
-  { name: "Kalimpong, West Bengal", icon: TreePine },
-  { name: "Kurseong, West Bengal", icon: TreePine },
-  { name: "Mirik, West Bengal", icon: TreePine },
-  { name: "Jalpaiguri, West Bengal", icon: Building2 },
-  { name: "Cooch Behar, West Bengal", icon: Building2 },
-  { name: "Alipurduar, West Bengal", icon: Building2 },
-  { name: "Dooars, West Bengal", icon: TreePine },
-  // South Bengal - Beaches
-  { name: "Digha Beach, East Midnapore", icon: Ship },
-  { name: "Mandarmani Beach, East Midnapore", icon: Ship },
-  { name: "Tajpur Beach, East Midnapore", icon: Ship },
-  { name: "Bakkhali Beach, South 24 Parganas", icon: Ship },
-  { name: "Sundarbans, South 24 Parganas", icon: TreePine },
-  { name: "Diamond Harbour, South 24 Parganas", icon: Ship },
-  { name: "Haldia, East Midnapore", icon: Building2 },
-  { name: "Kharagpur, West Midnapore", icon: Train },
-  // Central Bengal
-  { name: "Durgapur, West Bengal", icon: Building2 },
-  { name: "Asansol, West Bengal", icon: Building2 },
-  { name: "Bardhaman (Burdwan), West Bengal", icon: Building2 },
-  { name: "Bankura, West Bengal", icon: Building2 },
-  { name: "Bishnupur, Bankura", icon: Landmark },
-  { name: "Purulia, West Bengal", icon: Building2 },
-  { name: "Shantiniketan, Birbhum", icon: Landmark },
-  { name: "Bolpur, Birbhum", icon: Train },
-  { name: "Nabadwip, Nadia", icon: Landmark },
-  { name: "Mayapur, Nadia", icon: Landmark },
-  { name: "Krishnanagar, Nadia", icon: Building2 },
-  // More Districts
-  { name: "Malda, West Bengal", icon: Building2 },
-  { name: "Murshidabad, West Bengal", icon: Landmark },
-  { name: "Berhampore, Murshidabad", icon: Building2 },
-  { name: "Raiganj, Uttar Dinajpur", icon: Building2 },
-  // Major Bus Stands
-  { name: "Esplanade Bus Stand, Kolkata", icon: Building2 },
-  { name: "Babughat Bus Stand, Kolkata", icon: Building2 },
-  // Other Indian Cities
-  { name: "India Gate, Delhi", icon: Landmark },
-  { name: "Gateway of India, Mumbai", icon: Landmark },
-  { name: "Patna, Bihar", icon: Building2 },
-  { name: "Ranchi, Jharkhand", icon: Building2 },
-  { name: "Bhubaneswar, Odisha", icon: Building2 },
-  { name: "Guwahati, Assam", icon: Building2 },
-];
-
 function LocationField({ value, onChange, label, placeholder, testId, variant = "default" }: { 
   value: string; 
   onChange: (v: string) => void; 
@@ -109,8 +40,12 @@ function LocationField({ value, onChange, label, placeholder, testId, variant = 
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const filtered = value 
-    ? popularLocations.filter(l => l.name.toLowerCase().includes(value.toLowerCase()))
-    : popularLocations;
+    ? westBengalLocations.filter(l => 
+        l.name.toLowerCase().includes(value.toLowerCase()) ||
+        l.category.toLowerCase().includes(value.toLowerCase()) ||
+        l.district.toLowerCase().includes(value.toLowerCase())
+      )
+    : westBengalLocations;
 
   const getDotColor = () => {
     if (variant === "pickup") return "bg-green-500";
@@ -137,13 +72,15 @@ function LocationField({ value, onChange, label, placeholder, testId, variant = 
           {showSuggestions && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-popover border rounded-xl shadow-xl z-50 max-h-56 overflow-hidden">
               <div className="p-2 border-b bg-muted/30">
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <Navigation className="h-3 w-3" />
-                  Popular Destinations
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    <Navigation className="h-3 w-3" />
+                    {value ? `Results (${filtered.length})` : "All Locations"}
+                  </div>
                 </div>
               </div>
               <div className="p-1 overflow-y-auto max-h-44">
-                {filtered.slice(0, 8).map((location, index) => {
+                {filtered.slice(0, 10).map((location, index) => {
                   const Icon = location.icon;
                   return (
                     <button
@@ -157,11 +94,21 @@ function LocationField({ value, onChange, label, placeholder, testId, variant = 
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{location.name.split(',')[0]}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{location.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{location.district} - {location.category}</p>
                       </div>
                     </button>
                   );
                 })}
+                {filtered.length === 0 && (
+                  <div className="px-3 py-4 text-center text-muted-foreground text-sm">
+                    No locations found
+                  </div>
+                )}
+                {filtered.length > 10 && (
+                  <div className="px-3 py-2 text-center text-xs text-muted-foreground border-t">
+                    +{filtered.length - 10} more results
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -208,12 +155,12 @@ export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
               </FormItem>
             )} />
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="driverName" render={({ field }) => (<FormItem><FormLabel>Your Name</FormLabel><FormControl><Input placeholder="John Doe" {...field} data-testid="input-driver-name" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="driverPhone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+1234567890" {...field} data-testid="input-driver-phone" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="driverName" render={({ field }) => (<FormItem><FormLabel>Your Name</FormLabel><FormControl><Input placeholder="Your name" {...field} data-testid="input-driver-name" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="driverPhone" render={({ field }) => (<FormItem><FormLabel>Phone Number</FormLabel><FormControl><Input placeholder="+91 9876543210" {...field} data-testid="input-driver-phone" /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="carModel" render={({ field }) => (<FormItem><FormLabel>Vehicle Model</FormLabel><FormControl><Input placeholder="Toyota Camry" {...field} data-testid="input-car-model" /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="carNumber" render={({ field }) => (<FormItem><FormLabel>Vehicle Number</FormLabel><FormControl><Input placeholder="ABC 1234" {...field} data-testid="input-car-number" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="carModel" render={({ field }) => (<FormItem><FormLabel>Vehicle Model</FormLabel><FormControl><Input placeholder="Tata Indica, Maruti Swift" {...field} data-testid="input-car-model" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="carNumber" render={({ field }) => (<FormItem><FormLabel>Vehicle Number</FormLabel><FormControl><Input placeholder="WB 06 1234" {...field} data-testid="input-car-number" /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="origin" render={({ field }) => (
