@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCarSchema, insertBookingSchema } from "@shared/schema";
 import { z } from "zod";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -125,6 +127,15 @@ export async function registerRoutes(
       res.json(booking);
     } catch (error) {
       res.status(500).json({ error: "Failed to update booking" });
+    }
+  });
+
+  app.get("/download/project", (req, res) => {
+    const zipPath = path.join(process.cwd(), "rideshare-project.zip");
+    if (fs.existsSync(zipPath)) {
+      res.download(zipPath, "rideshare-project.zip");
+    } else {
+      res.status(404).json({ error: "File not found" });
     }
   });
 
