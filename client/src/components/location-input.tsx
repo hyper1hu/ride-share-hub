@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Clock, Navigation } from "lucide-react";
+import { Search, Clock, Navigation, MapPin, Loader2, Crosshair } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { westBengalLocations, searchLocations } from "@/lib/locations";
+import { getCurrentLocation, findNearbyPickupPoints, formatDistance, type NearbyLocation } from "@/lib/geolocation";
+import { useToast } from "@/hooks/use-toast";
 
 interface LocationInputProps {
   value: string;
@@ -23,8 +26,11 @@ const recentLocations = [
 export function LocationInput({ value, onChange, placeholder, className, variant = "default", "data-testid": testId }: LocationInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState(westBengalLocations);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [nearbyLocations, setNearbyLocations] = useState<NearbyLocation[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -45,6 +51,31 @@ export function LocationInput({ value, onChange, placeholder, className, variant
   const handleSelect = (location: string) => {
     onChange(location);
     setIsOpen(false);
+    setNearbyLocations([]);
+  };
+
+  const handleGetCurrentLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      const coords = await getCurrentLocation();
+      const nearby = findNearbyPickupPoints(coords, 6);
+      setNearbyLocations(nearby);
+      
+      if (nearby.length > 0) {
+        toast({
+          title: "Location detected",
+          description: `Found ${nearby.length} nearby pickup points. Select one for easy roadside pickup.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Location access needed",
+        description: error instanceof Error ? error.message : "Unable to get your location",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   const getDotColor = () => {
@@ -71,9 +102,65 @@ export function LocationInput({ value, onChange, placeholder, className, variant
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-2 bg-popover border rounded-xl shadow-xl z-50 max-h-80 overflow-hidden"
+          className="absolute top-full left-0 right-0 mt-2 bg-popover border rounded-xl shadow-xl z-50 max-h-96 overflow-hidden"
         >
-          {!value && (
+          {variant === "pickup" && (
+            <div className="p-2 border-b">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full justify-start gap-2 h-11"
+                onClick={handleGetCurrentLocation}
+                disabled={isLoadingLocation}
+                data-testid="button-use-current-location"
+              >
+                {isLoadingLocation ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : (
+                  <Crosshair className="h-4 w-4 text-primary" />
+                )}
+                <span className="font-medium">
+                  {isLoadingLocation ? "Detecting location..." : "Use Current Location"}
+                </span>
+              </Button>
+            </div>
+          )}
+
+          {nearbyLocations.length > 0 && (
+            <>
+              <div className="p-3 border-b bg-green-50 dark:bg-green-950/30">
+                <div className="flex items-center gap-2 text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Nearby Pickup Points (Roadside)
+                </div>
+              </div>
+              <div className="p-1 border-b">
+                {nearbyLocations.map((location, index) => (
+                  <button
+                    key={`nearby-${index}`}
+                    type="button"
+                    className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left rounded-lg hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors"
+                    onClick={() => handleSelect(location.name)}
+                    data-testid={`nearby-location-${index}`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{location.name.split(',')[0]}</p>
+                      <p className="text-xs text-muted-foreground truncate">{location.district} - {location.category}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 font-medium flex-shrink-0">
+                      {formatDistance(location.distance)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          
+          {!value && nearbyLocations.length === 0 && (
             <>
               <div className="p-3 border-b bg-muted/30">
                 <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -117,8 +204,8 @@ export function LocationInput({ value, onChange, placeholder, className, variant
             </div>
           </div>
           
-          <div className="p-1 overflow-y-auto max-h-56">
-            {filteredLocations.slice(0, 15).map((location, index) => {
+          <div className="p-1 overflow-y-auto max-h-48">
+            {filteredLocations.slice(0, 12).map((location, index) => {
               const Icon = location.icon;
               return (
                 <button
@@ -146,9 +233,9 @@ export function LocationInput({ value, onChange, placeholder, className, variant
                 No locations found. Try searching by city, district, or category.
               </div>
             )}
-            {filteredLocations.length > 15 && (
+            {filteredLocations.length > 12 && (
               <div className="px-3 py-2 text-center text-xs text-muted-foreground border-t">
-                Showing 15 of {filteredLocations.length} results. Type to refine search.
+                Showing 12 of {filteredLocations.length} results. Type to refine search.
               </div>
             )}
           </div>

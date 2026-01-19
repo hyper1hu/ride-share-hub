@@ -67,6 +67,7 @@ export default function Customer() {
                   value={searchOrigin} 
                   onChange={setSearchOrigin} 
                   placeholder="From (landmark or city)"
+                  variant="pickup"
                   data-testid="input-search-origin"
                 />
               </div>
@@ -76,6 +77,7 @@ export default function Customer() {
                   value={searchDestination} 
                   onChange={setSearchDestination} 
                   placeholder="To (landmark or city)"
+                  variant="drop"
                   data-testid="input-search-destination"
                 />
               </div>

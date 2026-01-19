@@ -89,6 +89,7 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - `npm run dev` - Start development server on port 5000
 
 ## Recent Changes (January 2026)
+- Added "Use Current Location" feature with GPS detection for smart pickup point suggestions
 - Added smart search with aliases (type "airport" to find Kolkata Airport, "beach" for Digha, etc.)
 - Added 441+ comprehensive West Bengal locations covering all 23 districts
 - Changed currency from dollars ($) to Indian Rupees (₹)
