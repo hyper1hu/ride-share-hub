@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2, Bus, Bike, Truck, IndianRupee, Shield, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2, Bus, Bike, Truck, IndianRupee, Shield, Star, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BookingDialog } from "@/components/booking-dialog";
 import { LocationInput } from "@/components/location-input";
+import { RouteMap } from "@/components/route-map";
 import type { Car as CarType } from "@shared/schema";
 
 const vehicleTypeLabels: Record<string, string> = {
@@ -101,6 +102,27 @@ export default function Customer() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Map className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold text-sm">Route Map</h2>
+              {searchOrigin && searchDestination && (
+                <Badge variant="secondary" className="ml-auto text-xs">
+                  {searchOrigin} → {searchDestination}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <CardContent className="p-0">
+            <RouteMap 
+              origin={searchOrigin} 
+              destination={searchDestination} 
+              className="h-64 lg:h-80"
+            />
           </CardContent>
         </Card>
 
