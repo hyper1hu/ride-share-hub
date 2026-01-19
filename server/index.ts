@@ -2,10 +2,6 @@ import express from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
 import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -17,6 +13,10 @@ const httpServer = createServer(app);
   await registerRoutes(httpServer, app);
 
   if (process.env.NODE_ENV === "development") {
+    const { fileURLToPath } = await import("url");
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true, allowedHosts: true },
@@ -31,9 +31,10 @@ const httpServer = createServer(app);
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, "../dist/public")));
+    const distPath = path.join(process.cwd(), "dist/public");
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "../dist/public/index.html"));
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
