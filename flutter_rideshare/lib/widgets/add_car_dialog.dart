@@ -12,6 +12,7 @@ class AddCarDialog extends StatefulWidget {
 
 class _AddCarDialogState extends State<AddCarDialog> {
   final _formKey = GlobalKey<FormState>();
+  String _vehicleType = 'car';
   final _driverNameController = TextEditingController();
   final _driverPhoneController = TextEditingController();
   final _carModelController = TextEditingController();
@@ -43,7 +44,7 @@ class _AddCarDialogState extends State<AddCarDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('List Your Car'),
+      title: const Text('List Your Vehicle'),
       content: SizedBox(
         width: 400,
         child: Form(
@@ -52,6 +53,22 @@ class _AddCarDialogState extends State<AddCarDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                DropdownButtonFormField<String>(
+                  value: _vehicleType,
+                  decoration: const InputDecoration(
+                    labelText: 'Vehicle Type',
+                    prefixIcon: Icon(Icons.directions_car),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: Car.vehicleTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(Car.vehicleTypeLabels[type] ?? type),
+                    );
+                  }).toList(),
+                  onChanged: (value) => setState(() => _vehicleType = value ?? 'car'),
+                ),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(child: _buildTextField(_driverNameController, 'Your Name', Icons.person)),
@@ -62,9 +79,9 @@ class _AddCarDialogState extends State<AddCarDialog> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _buildTextField(_carModelController, 'Car Model', Icons.directions_car)),
+                    Expanded(child: _buildTextField(_carModelController, 'Vehicle Model', Icons.directions_car)),
                     const SizedBox(width: 12),
-                    Expanded(child: _buildTextField(_carNumberController, 'Car Number', Icons.confirmation_number)),
+                    Expanded(child: _buildTextField(_carNumberController, 'Vehicle Number', Icons.confirmation_number)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -100,7 +117,7 @@ class _AddCarDialogState extends State<AddCarDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: _submitForm, child: const Text('List Car')),
+        FilledButton(onPressed: _submitForm, child: const Text('List Vehicle')),
       ],
     );
   }
@@ -141,6 +158,7 @@ class _AddCarDialogState extends State<AddCarDialog> {
     if (_formKey.currentState!.validate()) {
       final car = Car(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
+        vehicleType: _vehicleType,
         driverName: _driverNameController.text,
         driverPhone: _driverPhoneController.text,
         carModel: _carModelController.text,
@@ -157,7 +175,7 @@ class _AddCarDialogState extends State<AddCarDialog> {
       Provider.of<AppProvider>(context, listen: false).addCar(car);
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Car listed successfully!')),
+        const SnackBar(content: Text('Vehicle listed successfully!')),
       );
     }
   }

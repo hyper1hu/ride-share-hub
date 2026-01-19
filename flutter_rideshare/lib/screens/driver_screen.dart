@@ -7,6 +7,20 @@ import '../widgets/add_car_dialog.dart';
 class DriverScreen extends StatelessWidget {
   const DriverScreen({super.key});
 
+  IconData _getVehicleIcon(String type) {
+    switch (type) {
+      case 'bus':
+      case 'minibus':
+        return Icons.directions_bus;
+      case 'motorcycle':
+        return Icons.two_wheeler;
+      case 'truck':
+        return Icons.local_shipping;
+      default:
+        return Icons.directions_car;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -32,7 +46,7 @@ class DriverScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddCarDialog(context),
         icon: const Icon(Icons.add),
-        label: const Text('Add Car'),
+        label: const Text('Add Vehicle'),
       ),
       body: cars.isEmpty
           ? Center(
@@ -41,15 +55,15 @@ class DriverScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.directions_car_outlined, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
                   const SizedBox(height: 16),
-                  Text('No cars listed yet', style: theme.textTheme.titleLarge),
+                  Text('No vehicles listed yet', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text('Start earning by listing your car.',
+                  Text('Start earning by listing your vehicle.',
                       style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
                   const SizedBox(height: 24),
                   FilledButton.icon(
                     onPressed: () => _showAddCarDialog(context),
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Your First Car'),
+                    label: const Text('Add Your First Vehicle'),
                   ),
                 ],
               ),
@@ -59,7 +73,7 @@ class DriverScreen extends StatelessWidget {
               itemCount: cars.length,
               itemBuilder: (context, index) {
                 final car = cars[index];
-                return _DriverCarCard(car: car);
+                return _DriverCarCard(car: car, getVehicleIcon: _getVehicleIcon);
               },
             ),
     );
@@ -75,8 +89,9 @@ class DriverScreen extends StatelessWidget {
 
 class _DriverCarCard extends StatelessWidget {
   final Car car;
+  final IconData Function(String) getVehicleIcon;
 
-  const _DriverCarCard({required this.car});
+  const _DriverCarCard({required this.car, required this.getVehicleIcon});
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +99,7 @@ class _DriverCarCard extends StatelessWidget {
     final appProvider = Provider.of<AppProvider>(context);
     final bookings = appProvider.getBookingsForCar(car.id);
     final availableSeats = appProvider.getAvailableSeats(car);
+    final vehicleIcon = getVehicleIcon(car.vehicleType);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -100,14 +116,27 @@ class _DriverCarCard extends StatelessWidget {
                     color: theme.colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.directions_car, color: theme.colorScheme.primary),
+                  child: Icon(vehicleIcon, color: theme.colorScheme.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(car.carModel, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Text(car.carModel, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: theme.colorScheme.outline),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(car.vehicleTypeLabel, style: const TextStyle(fontSize: 10)),
+                          ),
+                        ],
+                      ),
                       Text(car.carNumber, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
                     ],
                   ),
@@ -173,8 +202,8 @@ class _DriverCarCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove car listing?'),
-        content: const Text('This will remove your car listing and any pending bookings. This action cannot be undone.'),
+        title: const Text('Remove vehicle listing?'),
+        content: const Text('This will remove your vehicle listing and any pending bookings. This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -186,7 +215,7 @@ class _DriverCarCard extends StatelessWidget {
               Provider.of<AppProvider>(context, listen: false).removeCar(car.id);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Car listing removed')),
+                const SnackBar(content: Text('Vehicle listing removed')),
               );
             },
             child: const Text('Remove'),

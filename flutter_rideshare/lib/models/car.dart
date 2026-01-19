@@ -1,5 +1,6 @@
 class Car {
   final String id;
+  final String vehicleType;
   final String driverName;
   final String driverPhone;
   final String carModel;
@@ -14,8 +15,24 @@ class Car {
   final String status;
   final DateTime createdAt;
 
+  static const List<String> vehicleTypes = [
+    'car', 'suv', 'van', 'bus', 'minibus', 'motorcycle', 'auto_rickshaw', 'truck'
+  ];
+
+  static const Map<String, String> vehicleTypeLabels = {
+    'car': 'Car',
+    'suv': 'SUV',
+    'van': 'Van',
+    'bus': 'Bus',
+    'minibus': 'Minibus',
+    'motorcycle': 'Motorcycle',
+    'auto_rickshaw': 'Auto Rickshaw',
+    'truck': 'Truck',
+  };
+
   Car({
     required this.id,
+    this.vehicleType = 'car',
     required this.driverName,
     required this.driverPhone,
     required this.carModel,
@@ -34,6 +51,7 @@ class Car {
   factory Car.fromJson(Map<String, dynamic> json) {
     return Car(
       id: json['id'] ?? '',
+      vehicleType: json['vehicleType'] ?? 'car',
       driverName: json['driverName'] ?? '',
       driverPhone: json['driverPhone'] ?? '',
       carModel: json['carModel'] ?? '',
@@ -55,6 +73,7 @@ class Car {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'vehicleType': vehicleType,
       'driverName': driverName,
       'driverPhone': driverPhone,
       'carModel': carModel,
@@ -70,4 +89,6 @@ class Car {
       'createdAt': createdAt.toIso8601String(),
     };
   }
+
+  String get vehicleTypeLabel => vehicleTypeLabels[vehicleType] ?? 'Vehicle';
 }

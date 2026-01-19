@@ -22,6 +22,20 @@ class _CustomerScreenState extends State<CustomerScreen> {
     super.dispose();
   }
 
+  IconData _getVehicleIcon(String type) {
+    switch (type) {
+      case 'bus':
+      case 'minibus':
+        return Icons.directions_bus;
+      case 'motorcycle':
+        return Icons.two_wheeler;
+      case 'truck':
+        return Icons.local_shipping;
+      default:
+        return Icons.directions_car;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -106,7 +120,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
                     itemCount: filteredCars.length,
                     itemBuilder: (context, index) {
                       final car = filteredCars[index];
-                      return _CarCard(car: car);
+                      return _CarCard(car: car, getVehicleIcon: _getVehicleIcon);
                     },
                   ),
           ),
@@ -118,12 +132,14 @@ class _CustomerScreenState extends State<CustomerScreen> {
 
 class _CarCard extends StatelessWidget {
   final Car car;
+  final IconData Function(String) getVehicleIcon;
 
-  const _CarCard({required this.car});
+  const _CarCard({required this.car, required this.getVehicleIcon});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final vehicleIcon = getVehicleIcon(car.vehicleType);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -134,6 +150,22 @@ class _CarCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.colorScheme.outline),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(vehicleIcon, size: 14),
+                      const SizedBox(width: 4),
+                      Text(car.vehicleTypeLabel, style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Icon(Icons.location_on, size: 18, color: theme.colorScheme.primary),
                 const SizedBox(width: 4),
                 Text(car.origin, style: const TextStyle(fontWeight: FontWeight.w500)),
@@ -151,7 +183,7 @@ class _CarCard extends StatelessWidget {
               spacing: 16,
               runSpacing: 8,
               children: [
-                _InfoChip(icon: Icons.directions_car, label: '${car.carModel} (${car.carNumber})'),
+                _InfoChip(icon: vehicleIcon, label: '${car.carModel} (${car.carNumber})'),
                 _InfoChip(icon: Icons.person, label: car.driverName),
                 _InfoChip(icon: Icons.event_seat, label: '${car.seatsAvailable} seats'),
               ],

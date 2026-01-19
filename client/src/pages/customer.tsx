@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2, Bus, Bike, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,20 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BookingDialog } from "@/components/booking-dialog";
 import type { Car as CarType } from "@shared/schema";
+
+const vehicleTypeLabels: Record<string, string> = {
+  car: "Car", suv: "SUV", van: "Van", bus: "Bus", minibus: "Minibus",
+  motorcycle: "Motorcycle", auto_rickshaw: "Auto Rickshaw", truck: "Truck",
+};
+
+const getVehicleIcon = (type: string) => {
+  switch (type) {
+    case "bus": case "minibus": return Bus;
+    case "motorcycle": return Bike;
+    case "truck": return Truck;
+    default: return Car;
+  }
+};
 
 export default function Customer() {
   const [searchOrigin, setSearchOrigin] = useState("");
@@ -78,37 +92,44 @@ export default function Customer() {
               <h2 className="font-semibold text-lg" data-testid="text-available-rides-count">{filteredCars.length} ride{filteredCars.length !== 1 ? "s" : ""} available</h2>
             </div>
             <div className="grid gap-4">
-              {filteredCars.map((car) => (
-                <Card key={car.id} data-testid={`card-ride-${car.id}`}>
-                  <CardContent className="p-4">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-primary" /><span className="font-medium">{car.origin}</span></div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-destructive" /><span className="font-medium">{car.destination}</span></div>
+              {filteredCars.map((car) => {
+                const VehicleIcon = getVehicleIcon(car.vehicleType);
+                return (
+                  <Card key={car.id} data-testid={`card-ride-${car.id}`}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Badge variant="outline" className="gap-1">
+                              <VehicleIcon className="h-3 w-3" />
+                              {vehicleTypeLabels[car.vehicleType] || "Vehicle"}
+                            </Badge>
+                            <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-primary" /><span className="font-medium">{car.origin}</span></div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex items-center gap-2 text-sm"><MapPin className="h-4 w-4 text-destructive" /><span className="font-medium">{car.destination}</span></div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
+                            <div className="flex items-center gap-1.5"><VehicleIcon className="h-4 w-4" /><span>{car.carModel} ({car.carNumber})</span></div>
+                            <div className="flex items-center gap-1.5"><Phone className="h-4 w-4" /><span>{car.driverName}</span></div>
+                            <div className="flex items-center gap-1.5"><Users className="h-4 w-4" /><span>{car.seatsAvailable} seat{car.seatsAvailable !== 1 ? "s" : ""}</span></div>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-muted-foreground" /><span>Departs: <span className="font-medium">{car.departureTime}</span></span></div>
+                            <div className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-muted-foreground" /><span>Returns: <span className="font-medium">{car.returnTime}</span></span></div>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-3">
-                          <div className="flex items-center gap-1.5"><Car className="h-4 w-4" /><span>{car.carModel} ({car.carNumber})</span></div>
-                          <div className="flex items-center gap-1.5"><Phone className="h-4 w-4" /><span>{car.driverName}</span></div>
-                          <div className="flex items-center gap-1.5"><Users className="h-4 w-4" /><span>{car.seatsAvailable} seat{car.seatsAvailable !== 1 ? "s" : ""}</span></div>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-muted-foreground" /><span>Departs: <span className="font-medium">{car.departureTime}</span></span></div>
-                          <div className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-muted-foreground" /><span>Returns: <span className="font-medium">{car.returnTime}</span></span></div>
+                        <div className="flex flex-col items-end gap-3">
+                          <div className="text-right">
+                            <div className="flex items-center gap-2"><Badge variant="secondary">One Way</Badge><span className="font-bold text-lg">${car.fare}</span></div>
+                            <div className="flex items-center gap-2 mt-1"><Badge variant="outline">Round Trip</Badge><span className="font-semibold text-muted-foreground">${car.fare + car.returnFare}</span></div>
+                          </div>
+                          <Button onClick={() => handleBookClick(car)} data-testid={`button-book-${car.id}`}>Book Now</Button>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-3">
-                        <div className="text-right">
-                          <div className="flex items-center gap-2"><Badge variant="secondary">One Way</Badge><span className="font-bold text-lg">${car.fare}</span></div>
-                          <div className="flex items-center gap-2 mt-1"><Badge variant="outline">Round Trip</Badge><span className="font-semibold text-muted-foreground">${car.fare + car.returnFare}</span></div>
-                        </div>
-                        <Button onClick={() => handleBookClick(car)} data-testid={`button-book-${car.id}`}>Book Now</Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}

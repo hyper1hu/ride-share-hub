@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+export const vehicleTypes = ["car", "suv", "van", "bus", "minibus", "motorcycle", "auto_rickshaw", "truck"] as const;
+export type VehicleType = typeof vehicleTypes[number];
+
 export const carSchema = z.object({
   id: z.string(),
+  vehicleType: z.enum(vehicleTypes),
   driverName: z.string(),
   driverPhone: z.string(),
   carModel: z.string(),
@@ -18,17 +22,18 @@ export const carSchema = z.object({
 });
 
 export const insertCarSchema = z.object({
+  vehicleType: z.enum(vehicleTypes),
   driverName: z.string().min(2, "Driver name must be at least 2 characters"),
   driverPhone: z.string().min(10, "Phone number must be at least 10 digits"),
-  carModel: z.string().min(2, "Car model is required"),
-  carNumber: z.string().min(2, "Car number is required"),
+  carModel: z.string().min(2, "Vehicle model is required"),
+  carNumber: z.string().min(2, "Vehicle number is required"),
   origin: z.string().min(2, "Origin location is required"),
   destination: z.string().min(2, "Destination location is required"),
   fare: z.number().min(1, "Fare must be at least 1"),
   returnFare: z.number().min(1, "Return fare must be at least 1"),
   departureTime: z.string().min(1, "Departure time is required"),
   returnTime: z.string().min(1, "Return time is required"),
-  seatsAvailable: z.number().min(1, "At least 1 seat must be available").max(10, "Maximum 10 seats"),
+  seatsAvailable: z.number().min(1, "At least 1 seat must be available").max(60, "Maximum 60 seats"),
 });
 
 export type InsertCar = z.infer<typeof insertCarSchema>;

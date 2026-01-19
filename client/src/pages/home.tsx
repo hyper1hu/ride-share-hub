@@ -23,7 +23,7 @@ export default function Home() {
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-6">
               <Car className="h-4 w-4" />
-              <span className="text-sm font-medium">Reliable Car Hire Service</span>
+              <span className="text-sm font-medium">Reliable Vehicle Hire Service</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
               Travel Between Cities <span className="text-primary">With Ease</span>
@@ -42,7 +42,7 @@ export default function Home() {
               <Link href="/driver">
                 <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto" data-testid="link-driver">
                   <Car className="h-5 w-5" />
-                  List Your Car
+                  List Your Vehicle
                 </Button>
               </Link>
             </div>
@@ -118,7 +118,7 @@ export default function Home() {
                   <p className="text-muted-foreground mb-4">List your car, set your routes and fares. Earn by providing transport.</p>
                   <Link href="/driver">
                     <Button variant="outline" size="sm" className="gap-2" data-testid="link-driver-section">
-                      List Your Car
+                      List Your Vehicle
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
