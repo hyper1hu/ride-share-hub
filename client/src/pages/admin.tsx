@@ -5,7 +5,7 @@ import {
   ArrowLeft, Car, Users, Calendar, IndianRupee, MapPin, Clock, Phone, 
   Trash2, Loader2, Bus, Bike, Truck, ArrowRight, Shield, TrendingUp,
   LayoutDashboard, List, BookOpen, Settings, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, AlertCircle
+  CheckCircle, XCircle, AlertCircle, LogOut, Lock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,13 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Car as CarType, Booking, Driver } from "@shared/schema";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+interface Admin {
+  id: string;
+  username: string;
+}
 
 const vehicleTypeLabels: Record<string, string> = {
   car: "Car", suv: "SUV", van: "Van", bus: "Bus", minibus: "Minibus",
@@ -49,7 +55,50 @@ export default function Admin() {
   const [driverStatusFilter, setDriverStatusFilter] = useState<DriverStatusFilter>("all");
   const [rejectDriverId, setRejectDriverId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const { toast } = useToast();
+
+  const { data: adminData, isLoading: authLoading } = useQuery<{ admin: Admin }>({
+    queryKey: ["/api/auth/admin/me"],
+    retry: false,
+  });
+
+  const admin = adminData?.admin;
+
+  const loginMutation = useMutation({
+    mutationFn: async ({ username, password }: { username: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/auth/admin/login", { username, password });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/admin/me"] });
+      toast({ title: "Login successful", description: "Welcome to the admin panel!" });
+      setLoginUsername("");
+      setLoginPassword("");
+    },
+    onError: (error: Error) => {
+      toast({ title: "Login failed", description: error.message || "Invalid credentials", variant: "destructive" });
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/auth/admin/logout");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/admin/me"] });
+      toast({ title: "Logged out", description: "You have been logged out successfully." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to logout.", variant: "destructive" });
+    },
+  });
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    loginMutation.mutate({ username: loginUsername, password: loginPassword });
+  };
 
   const { data: cars = [], isLoading: carsLoading } = useQuery<CarType[]>({ queryKey: ["/api/cars"] });
   const { data: bookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({ queryKey: ["/api/bookings"] });
@@ -141,11 +190,96 @@ export default function Admin() {
               <p className="text-xs text-muted-foreground hidden sm:block">Manage your platform</p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            {admin && (
+              <>
+                <span className="text-sm text-muted-foreground hidden sm:inline" data-testid="text-admin-username">
+                  Logged in as: {admin.username}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  data-testid="button-admin-logout"
+                >
+                  {logoutMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <LogOut className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Logout</span>
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      {authLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : !admin ? (
+        <div className="container mx-auto px-4 py-6 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Admin Login</CardTitle>
+              <p className="text-muted-foreground text-sm mt-2">
+                Enter your credentials to access the admin panel
+              </p>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Enter username"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    required
+                    data-testid="input-admin-username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                    data-testid="input-admin-password"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loginMutation.isPending}
+                  data-testid="button-admin-login"
+                >
+                  {loginMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Shield className="h-4 w-4 mr-2" />
+                  )}
+                  Sign In
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="container mx-auto px-4 py-6">
         <div className="flex flex-wrap gap-2 mb-6 p-1 bg-muted/50 rounded-lg w-fit">
           {tabs.map((tab) => (
             <Button
@@ -657,6 +791,7 @@ export default function Admin() {
           </>
         )}
       </div>
+      )}
 
       <AlertDialog open={!!deleteCarId} onOpenChange={() => setDeleteCarId(null)}>
         <AlertDialogContent>

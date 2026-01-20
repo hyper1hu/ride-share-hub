@@ -1,16 +1,18 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCarSchema, insertBookingSchema, insertCustomerSchema, insertDriverSchema, loginSchema } from "@shared/schema";
+import { insertCarSchema, insertBookingSchema, insertCustomerSchema, insertDriverSchema, loginSchema, adminLoginSchema } from "@shared/schema";
 import { z } from "zod";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
 
 declare module "express-session" {
   interface SessionData {
     customerId?: string;
     driverId?: string;
-    userType?: "customer" | "driver";
+    adminId?: string;
+    userType?: "customer" | "driver" | "admin";
   }
 }
 
@@ -28,6 +30,13 @@ const requireDriverAuth = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+const requireAdminAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.session.adminId) {
+    return res.status(401).json({ error: "Admin authentication required", needsAuth: true });
+  }
+  next();
+};
+
 const otpSchema = z.object({
   mobile: z.string().min(10).max(10),
   userType: z.enum(["customer", "driver"]),
@@ -39,10 +48,232 @@ const verifyOtpSchema = z.object({
   userType: z.enum(["customer", "driver"]),
 });
 
+function hashPassword(password: string): string {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
+
+async function initializeSampleData(): Promise<void> {
+  try {
+    const existingAdmin = await storage.getAdminByUsername("admin");
+    if (!existingAdmin) {
+      await storage.createAdmin({
+        username: "admin",
+        passwordHash: hashPassword("admin123"),
+      });
+      console.log("[INIT] Default admin created (username: admin, password: admin123)");
+    }
+
+    const existingDrivers = await storage.getDrivers();
+    if (existingDrivers.length === 0) {
+      const sampleDrivers = [
+        { name: "Rajesh Kumar", mobile: "9876543210", age: 35, aadhaarNumber: "123456789012", licenseNumber: "WB2019123456" },
+        { name: "Sunil Das", mobile: "9876543211", age: 42, aadhaarNumber: "234567890123", licenseNumber: "WB2018234567" },
+        { name: "Amit Sharma", mobile: "9876543212", age: 28, aadhaarNumber: "345678901234", licenseNumber: "WB2020345678" },
+        { name: "Bikash Ghosh", mobile: "9876543213", age: 38, aadhaarNumber: "456789012345", licenseNumber: "WB2017456789" },
+        { name: "Pradeep Mukherjee", mobile: "9876543214", age: 45, aadhaarNumber: "567890123456", licenseNumber: "WB2016567890" },
+      ];
+
+      const createdDrivers: any[] = [];
+      for (const driverData of sampleDrivers) {
+        const driver = await storage.createDriver(driverData);
+        await storage.updateDriver(driver.id, { verificationStatus: "approved" });
+        createdDrivers.push({ ...driver, verificationStatus: "approved" });
+      }
+      console.log("[INIT] 5 sample approved drivers created");
+
+      const sampleVehicles = [
+        {
+          driverId: createdDrivers[0].id,
+          vehicleType: "car" as const,
+          driverName: "Rajesh Kumar",
+          driverPhone: "9876543210",
+          carModel: "Maruti Suzuki Swift Dzire",
+          carNumber: "WB02AB1234",
+          origin: "Kolkata",
+          destination: "Siliguri",
+          waypoints: ["Durgapur"],
+          fare: 2500,
+          returnFare: 2200,
+          departureTime: "06:00",
+          returnTime: "18:00",
+          seatsAvailable: 4,
+        },
+        {
+          driverId: createdDrivers[0].id,
+          vehicleType: "suv" as const,
+          driverName: "Rajesh Kumar",
+          driverPhone: "9876543210",
+          carModel: "Mahindra Scorpio",
+          carNumber: "WB02CD5678",
+          origin: "Howrah Station",
+          destination: "Darjeeling",
+          waypoints: [],
+          fare: 4500,
+          returnFare: 4000,
+          departureTime: "05:00",
+          returnTime: "19:00",
+          seatsAvailable: 6,
+        },
+        {
+          driverId: createdDrivers[1].id,
+          vehicleType: "bus" as const,
+          driverName: "Sunil Das",
+          driverPhone: "9876543211",
+          carModel: "Ashok Leyland Viking",
+          carNumber: "WB03EF9012",
+          origin: "Sealdah Station",
+          destination: "Digha",
+          waypoints: [],
+          fare: 800,
+          returnFare: 750,
+          departureTime: "07:00",
+          returnTime: "16:00",
+          seatsAvailable: 45,
+        },
+        {
+          driverId: createdDrivers[2].id,
+          vehicleType: "van" as const,
+          driverName: "Amit Sharma",
+          driverPhone: "9876543212",
+          carModel: "Maruti Suzuki Eeco",
+          carNumber: "WB04GH3456",
+          origin: "Salt Lake",
+          destination: "Shantiniketan",
+          waypoints: [],
+          fare: 1800,
+          returnFare: 1600,
+          departureTime: "08:00",
+          returnTime: "17:00",
+          seatsAvailable: 7,
+        },
+        {
+          driverId: createdDrivers[3].id,
+          vehicleType: "minibus" as const,
+          driverName: "Bikash Ghosh",
+          driverPhone: "9876543213",
+          carModel: "Force Traveller",
+          carNumber: "WB05IJ7890",
+          origin: "New Town",
+          destination: "Murshidabad",
+          waypoints: [],
+          fare: 1200,
+          returnFare: 1100,
+          departureTime: "06:30",
+          returnTime: "18:30",
+          seatsAvailable: 26,
+        },
+        {
+          driverId: createdDrivers[4].id,
+          vehicleType: "motorcycle" as const,
+          driverName: "Pradeep Mukherjee",
+          driverPhone: "9876543214",
+          carModel: "Royal Enfield Classic 350",
+          carNumber: "WB06KL1234",
+          origin: "Jadavpur",
+          destination: "Diamond Harbour",
+          waypoints: [],
+          fare: 500,
+          returnFare: 450,
+          departureTime: "09:00",
+          returnTime: "15:00",
+          seatsAvailable: 1,
+        },
+        {
+          driverId: createdDrivers[4].id,
+          vehicleType: "auto_rickshaw" as const,
+          driverName: "Pradeep Mukherjee",
+          driverPhone: "9876543214",
+          carModel: "Bajaj RE",
+          carNumber: "WB07MN5678",
+          origin: "Park Street",
+          destination: "Kalighat",
+          waypoints: [],
+          fare: 150,
+          returnFare: 150,
+          departureTime: "08:00",
+          returnTime: "20:00",
+          seatsAvailable: 3,
+        },
+        {
+          driverId: createdDrivers[1].id,
+          vehicleType: "truck" as const,
+          driverName: "Sunil Das",
+          driverPhone: "9876543211",
+          carModel: "Tata 407",
+          carNumber: "WB08OP9012",
+          origin: "Kolkata Port",
+          destination: "Haldia",
+          waypoints: [],
+          fare: 3500,
+          returnFare: 3200,
+          departureTime: "04:00",
+          returnTime: "22:00",
+          seatsAvailable: 2,
+        },
+      ];
+
+      for (const vehicleData of sampleVehicles) {
+        await storage.createCar(vehicleData);
+      }
+      console.log("[INIT] 8 sample vehicles created with West Bengal routes");
+    }
+  } catch (error) {
+    console.error("[INIT] Error initializing sample data:", error);
+  }
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  await initializeSampleData();
+
+  app.post("/api/auth/admin/login", async (req, res) => {
+    try {
+      const { username, password } = adminLoginSchema.parse(req.body);
+      const admin = await storage.getAdminByUsername(username);
+      if (!admin) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      const passwordHash = hashPassword(password);
+      if (admin.passwordHash !== passwordHash) {
+        return res.status(401).json({ error: "Invalid username or password" });
+      }
+      req.session.adminId = admin.id;
+      req.session.userType = "admin";
+      res.json({ 
+        admin: { id: admin.id, username: admin.username }, 
+        message: "Admin login successful!" 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  app.get("/api/auth/admin/me", async (req, res) => {
+    if (!req.session.adminId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    const admin = await storage.getAdminByUsername("admin");
+    if (!admin || admin.id !== req.session.adminId) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ error: "Session expired" });
+    }
+    res.json({ admin: { id: admin.id, username: admin.username } });
+  });
+
+  app.post("/api/auth/admin/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Logout failed" });
+      }
+      res.json({ message: "Admin logged out successfully" });
+    });
+  });
 
   app.post("/api/auth/otp/send", async (req, res) => {
     try {
@@ -257,7 +488,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/drivers/:id/verify", async (req, res) => {
+  app.patch("/api/drivers/:id/verify", requireAdminAuth, async (req, res) => {
     try {
       const { status, rejectionReason } = req.body;
       if (!["approved", "rejected"].includes(status)) {
