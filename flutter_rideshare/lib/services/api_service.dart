@@ -5,11 +5,60 @@ import '../models/booking.dart';
 import '../models/customer.dart';
 import '../models/driver.dart';
 
+class OtpResult {
+  final bool success;
+  final String? otp;
+  final String? error;
+  final DateTime? expiresAt;
+
+  OtpResult({required this.success, this.otp, this.error, this.expiresAt});
+}
+
 class ApiService {
   static String baseUrl = 'http://localhost:5000';
   
   static void setBaseUrl(String url) {
     baseUrl = url;
+  }
+
+  static Future<OtpResult> sendOtp(String mobile, String userType) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/otp/send'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'mobile': mobile, 'userType': userType}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return OtpResult(
+          success: true,
+          otp: data['otp'],
+          expiresAt: data['expiresAt'] != null ? DateTime.parse(data['expiresAt']) : null,
+        );
+      }
+      return OtpResult(success: false, error: data['error']?.toString() ?? 'Failed to send OTP');
+    } catch (e) {
+      print('Error sending OTP: $e');
+      return OtpResult(success: false, error: 'Network error');
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyOtp(String mobile, String otp, String userType) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/otp/verify'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'mobile': mobile, 'otp': otp, 'userType': userType}),
+      );
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true};
+      }
+      return {'success': false, 'error': data['error']?.toString() ?? 'Invalid OTP'};
+    } catch (e) {
+      print('Error verifying OTP: $e');
+      return {'success': false, 'error': 'Network error'};
+    }
   }
 
   static Future<List<Car>> getCars() async {

@@ -15,6 +15,11 @@ class AppProvider with ChangeNotifier {
   Driver? _driver;
   String? _error;
 
+  String? _pendingOtpMobile;
+  String? _pendingOtpUserType;
+  String? _displayOtp;
+  bool _otpVerified = false;
+
   bool get isDarkMode => _isDarkMode;
   List<Car> get cars => _cars;
   List<Booking> get bookings => _bookings;
@@ -24,6 +29,9 @@ class AppProvider with ChangeNotifier {
   String? get error => _error;
   bool get isCustomerLoggedIn => _customer != null;
   bool get isDriverLoggedIn => _driver != null;
+  String? get pendingOtpMobile => _pendingOtpMobile;
+  String? get displayOtp => _displayOtp;
+  bool get otpVerified => _otpVerified;
 
   List<Car> get availableCars => _cars.where((c) => c.status == 'available').toList();
 
@@ -56,6 +64,54 @@ class AppProvider with ChangeNotifier {
     _isDarkMode = !_isDarkMode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', _isDarkMode);
+    notifyListeners();
+  }
+
+  Future<OtpResult> sendOtp(String mobile, String userType) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final result = await ApiService.sendOtp(mobile, userType);
+    
+    if (result.success) {
+      _pendingOtpMobile = mobile;
+      _pendingOtpUserType = userType;
+      _displayOtp = result.otp;
+      _otpVerified = false;
+    } else {
+      _error = result.error ?? 'Failed to send OTP';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
+  Future<Map<String, dynamic>> verifyOtp(String mobile, String otp, String userType) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    final result = await ApiService.verifyOtp(mobile, otp, userType);
+    
+    if (result['success'] == true) {
+      _otpVerified = true;
+      _displayOtp = null;
+    } else {
+      _error = result['error'] ?? 'Invalid OTP';
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return result;
+  }
+
+  void clearOtpState() {
+    _pendingOtpMobile = null;
+    _pendingOtpUserType = null;
+    _displayOtp = null;
+    _otpVerified = false;
     notifyListeners();
   }
 

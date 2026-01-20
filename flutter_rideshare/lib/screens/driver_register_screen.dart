@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 
+enum AuthStep { mobile, otp, register }
+
 class DriverRegisterScreen extends StatefulWidget {
   const DriverRegisterScreen({super.key});
 
@@ -11,11 +13,13 @@ class DriverRegisterScreen extends StatefulWidget {
 }
 
 class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
-  bool _isLoginMode = true;
-  final _loginFormKey = GlobalKey<FormState>();
+  AuthStep _currentStep = AuthStep.mobile;
+  final _mobileFormKey = GlobalKey<FormState>();
+  final _otpFormKey = GlobalKey<FormState>();
   final _registerFormKey = GlobalKey<FormState>();
   
   final _mobileController = TextEditingController();
+  final _otpController = TextEditingController();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController(text: '25');
   final _aadhaarController = TextEditingController();
@@ -24,6 +28,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
   @override
   void dispose() {
     _mobileController.dispose();
+    _otpController.dispose();
     _nameController.dispose();
     _ageController.dispose();
     _aadhaarController.dispose();
@@ -31,21 +36,61 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (!_loginFormKey.currentState!.validate()) return;
+  Future<void> _handleSendOtp() async {
+    if (!_mobileFormKey.currentState!.validate()) return;
 
     final provider = context.read<AppProvider>();
-    final success = await provider.loginDriver(_mobileController.text);
+    final result = await provider.sendOtp(_mobileController.text, 'driver');
 
-    if (success && mounted) {
+    if (result.success && mounted) {
+      setState(() => _currentStep = AuthStep.otp);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Welcome back!'), backgroundColor: Colors.green),
+        const SnackBar(content: Text('OTP sent to your mobile'), backgroundColor: Colors.green),
       );
-      Navigator.pop(context);
     } else if (mounted) {
-      setState(() => _isLoginMode = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New driver? Please complete registration.')),
+        SnackBar(content: Text(result.error ?? 'Failed to send OTP'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _handleVerifyOtp() async {
+    if (!_otpFormKey.currentState!.validate()) return;
+
+    final provider = context.read<AppProvider>();
+    final result = await provider.verifyOtp(_mobileController.text, _otpController.text, 'driver');
+
+    if (result['success'] == true && mounted) {
+      final loginSuccess = await provider.loginDriver(_mobileController.text);
+      if (loginSuccess && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Welcome back!'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context);
+      } else if (mounted) {
+        setState(() => _currentStep = AuthStep.register);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('OTP verified! Please complete registration.')),
+        );
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['error'] ?? 'Invalid OTP'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> _handleResendOtp() async {
+    final provider = context.read<AppProvider>();
+    final result = await provider.sendOtp(_mobileController.text, 'driver');
+
+    if (result.success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP resent successfully'), backgroundColor: Colors.green),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.error ?? 'Failed to resend OTP'), backgroundColor: Colors.red),
       );
     }
   }
@@ -63,6 +108,7 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     );
 
     if (success && mounted) {
+      provider.clearOtpState();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Registration submitted! Awaiting admin verification.'),
@@ -102,28 +148,33 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   color: colorScheme.primaryContainer.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.directions_car, size: 48, color: colorScheme.primary),
+                child: Icon(
+                  _currentStep == AuthStep.mobile ? Icons.phone_android :
+                  _currentStep == AuthStep.otp ? Icons.lock_clock :
+                  Icons.person_add,
+                  size: 48,
+                  color: colorScheme.primary,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
-                _isLoginMode ? 'Driver Login' : 'Driver Registration',
+                _currentStep == AuthStep.mobile ? 'Driver Login' :
+                _currentStep == AuthStep.otp ? 'Verify OTP' :
+                'Complete Registration',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                _isLoginMode
-                    ? 'Enter your mobile number to continue'
-                    : 'Complete your profile to start driving',
+                _currentStep == AuthStep.mobile ? 'Enter your mobile number to receive OTP' :
+                _currentStep == AuthStep.otp ? 'Enter the 6-digit code sent to ${_mobileController.text}' :
+                'Provide your details for verification',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              if (_isLoginMode) _buildLoginForm(provider) else _buildRegisterForm(provider),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => setState(() => _isLoginMode = !_isLoginMode),
-                child: Text(_isLoginMode ? 'New driver? Register here' : 'Already registered? Login'),
-              ),
+              if (_currentStep == AuthStep.mobile) _buildMobileForm(provider),
+              if (_currentStep == AuthStep.otp) _buildOtpForm(provider),
+              if (_currentStep == AuthStep.register) _buildRegisterForm(provider),
             ],
           ),
         ),
@@ -131,9 +182,9 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
     );
   }
 
-  Widget _buildLoginForm(AppProvider provider) {
+  Widget _buildMobileForm(AppProvider provider) {
     return Form(
-      key: _loginFormKey,
+      key: _mobileFormKey,
       child: Column(
         children: [
           TextFormField(
@@ -146,17 +197,89 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
               prefixIcon: Icon(Icons.phone),
               border: OutlineInputBorder(),
             ),
-            validator: (v) => (v?.length ?? 0) < 10 ? 'Enter 10 digit mobile number' : null,
+            validator: (v) => (v?.length ?? 0) != 10 ? 'Enter 10 digit mobile number' : null,
           ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: provider.isLoading ? null : _handleLogin,
+              onPressed: provider.isLoading ? null : _handleSendOtp,
               child: provider.isLoading
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Continue'),
+                  : const Text('Send OTP'),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOtpForm(AppProvider provider) {
+    return Form(
+      key: _otpFormKey,
+      child: Column(
+        children: [
+          if (provider.displayOtp != null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: Column(
+                children: [
+                  Text('Development Mode - OTP:', style: TextStyle(color: Colors.orange[700], fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Text(provider.displayOtp!, style: TextStyle(color: Colors.orange[900], fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 8)),
+                ],
+              ),
+            ),
+          TextFormField(
+            controller: _otpController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24, letterSpacing: 8),
+            decoration: const InputDecoration(
+              labelText: 'One-Time Password',
+              hintText: '------',
+              border: OutlineInputBorder(),
+            ),
+            validator: (v) => (v?.length ?? 0) != 6 ? 'Enter 6 digit OTP' : null,
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: provider.isLoading ? null : _handleVerifyOtp,
+              child: provider.isLoading
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Verify OTP'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => setState(() {
+                    _currentStep = AuthStep.mobile;
+                    _otpController.clear();
+                    context.read<AppProvider>().clearOtpState();
+                  }),
+                  child: const Text('Change Number'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: provider.isLoading ? null : _handleResendOtp,
+                  child: const Text('Resend OTP'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -170,15 +293,16 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
         children: [
           TextFormField(
             controller: _mobileController,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-            decoration: const InputDecoration(
+            enabled: false,
+            decoration: InputDecoration(
               labelText: 'Mobile Number',
-              prefixIcon: Icon(Icons.phone),
-              border: OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.phone),
+              suffixIcon: Icon(Icons.check_circle, color: Colors.green[600]),
+              border: const OutlineInputBorder(),
             ),
-            validator: (v) => (v?.length ?? 0) < 10 ? 'Enter 10 digit mobile number' : null,
           ),
+          const SizedBox(height: 8),
+          Text('Mobile verified', style: TextStyle(color: Colors.green[600], fontSize: 12)),
           const SizedBox(height: 16),
           TextFormField(
             controller: _nameController,
@@ -245,6 +369,15 @@ class _DriverRegisterScreenState extends State<DriverRegisterScreen> {
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Submit for Verification'),
             ),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => setState(() {
+              _currentStep = AuthStep.mobile;
+              _otpController.clear();
+              context.read<AppProvider>().clearOtpState();
+            }),
+            child: const Text('Back to Login'),
           ),
         ],
       ),
