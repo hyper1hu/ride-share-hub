@@ -20,15 +20,23 @@ interface Driver {
   rejectionReason?: string;
 }
 
+interface OtpResult {
+  success: boolean;
+  otp?: string;
+  error?: string;
+}
+
 interface AuthContextType {
   customer: Customer | null;
   driver: Driver | null;
   isLoading: boolean;
   isCustomerLoggedIn: boolean;
   isDriverLoggedIn: boolean;
-  loginCustomer: (mobile: string) => Promise<{ success: boolean; needsRegistration?: boolean; error?: string }>;
-  registerCustomer: (data: { mobile: string; name: string; age: number }) => Promise<{ success: boolean; error?: string }>;
-  loginDriver: (mobile: string) => Promise<{ success: boolean; needsRegistration?: boolean; error?: string }>;
+  sendOtp: (mobile: string, userType: "customer" | "driver") => Promise<OtpResult>;
+  verifyOtp: (mobile: string, otp: string, userType: "customer" | "driver") => Promise<{ success: boolean; error?: string }>;
+  loginCustomer: (mobile: string) => Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }>;
+  registerCustomer: (data: { mobile: string; name: string; age: number }) => Promise<{ success: boolean; needsOtp?: boolean; error?: string }>;
+  loginDriver: (mobile: string) => Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }>;
   registerDriver: (data: { 
     mobile: string; 
     name: string; 
@@ -38,7 +46,7 @@ interface AuthContextType {
     aadhaarImage?: string;
     licenseImage?: string;
     rcImage?: string;
-  }) => Promise<{ success: boolean; error?: string }>;
+  }) => Promise<{ success: boolean; needsOtp?: boolean; error?: string }>;
   logout: () => Promise<void>;
   refetch: () => void;
 }
@@ -76,7 +84,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [driverData]);
 
-  const loginCustomer = async (mobile: string): Promise<{ success: boolean; needsRegistration?: boolean; error?: string }> => {
+  const sendOtp = async (mobile: string, userType: "customer" | "driver"): Promise<OtpResult> => {
+    try {
+      const response = await apiRequest("POST", "/api/auth/otp/send", { mobile, userType });
+      const data = await response.json();
+      if (response.ok) {
+        return { success: true, otp: data.otp };
+      }
+      return { success: false, error: data.error };
+    } catch (error: any) {
+      return { success: false, error: error.message || "Failed to send OTP" };
+    }
+  };
+
+  const verifyOtp = async (mobile: string, otp: string, userType: "customer" | "driver"): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await apiRequest("POST", "/api/auth/otp/verify", { mobile, otp, userType });
+      const data = await response.json();
+      if (response.ok) {
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (error: any) {
+      return { success: false, error: error.message || "Failed to verify OTP" };
+    }
+  };
+
+  const loginCustomer = async (mobile: string): Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }> => {
     try {
       const response = await apiRequest("POST", "/api/auth/customer/login", { mobile });
       const data = await response.json();
@@ -85,13 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["/api/auth/customer/me"] });
         return { success: true };
       }
-      return { success: false, needsRegistration: data.needsRegistration, error: data.error };
+      return { success: false, needsRegistration: data.needsRegistration, needsOtp: data.needsOtp, error: data.error };
     } catch (error: any) {
       return { success: false, error: error.message || "Login failed" };
     }
   };
 
-  const registerCustomer = async (data: { mobile: string; name: string; age: number }): Promise<{ success: boolean; error?: string }> => {
+  const registerCustomer = async (data: { mobile: string; name: string; age: number }): Promise<{ success: boolean; needsOtp?: boolean; error?: string }> => {
     try {
       const response = await apiRequest("POST", "/api/auth/customer/register", data);
       const result = await response.json();
@@ -100,13 +134,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["/api/auth/customer/me"] });
         return { success: true };
       }
-      return { success: false, error: result.error };
+      return { success: false, needsOtp: result.needsOtp, error: result.error };
     } catch (error: any) {
       return { success: false, error: error.message || "Registration failed" };
     }
   };
 
-  const loginDriver = async (mobile: string): Promise<{ success: boolean; needsRegistration?: boolean; error?: string }> => {
+  const loginDriver = async (mobile: string): Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }> => {
     try {
       const response = await apiRequest("POST", "/api/auth/driver/login", { mobile });
       const data = await response.json();
@@ -115,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["/api/auth/driver/me"] });
         return { success: true };
       }
-      return { success: false, needsRegistration: data.needsRegistration, error: data.error };
+      return { success: false, needsRegistration: data.needsRegistration, needsOtp: data.needsOtp, error: data.error };
     } catch (error: any) {
       return { success: false, error: error.message || "Login failed" };
     }
@@ -130,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     aadhaarImage?: string;
     licenseImage?: string;
     rcImage?: string;
-  }): Promise<{ success: boolean; error?: string }> => {
+  }): Promise<{ success: boolean; needsOtp?: boolean; error?: string }> => {
     try {
       const response = await apiRequest("POST", "/api/auth/driver/register", data);
       const result = await response.json();
@@ -139,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["/api/auth/driver/me"] });
         return { success: true };
       }
-      return { success: false, error: result.error };
+      return { success: false, needsOtp: result.needsOtp, error: result.error };
     } catch (error: any) {
       return { success: false, error: error.message || "Registration failed" };
     }
@@ -170,6 +204,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading: customerLoading || driverLoading,
         isCustomerLoggedIn: !!customer,
         isDriverLoggedIn: !!driver,
+        sendOtp,
+        verifyOtp,
         loginCustomer,
         registerCustomer,
         loginDriver,

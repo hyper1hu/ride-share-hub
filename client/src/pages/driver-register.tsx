@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Loader2, Phone, User, Calendar, CreditCard, FileText, Car, Shield, CheckCircle, Clock, XCircle, LogIn } from "lucide-react";
+import { ArrowLeft, Loader2, Phone, User, Calendar, CreditCard, FileText, Car, Shield, CheckCircle, Clock, XCircle, LogIn, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,29 +12,43 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
-const loginSchema = z.object({
-  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+const mobileSchema = z.object({
+  mobile: z.string().length(10, "Mobile number must be exactly 10 digits").regex(/^\d+$/, "Only digits allowed"),
+});
+
+const otpSchema = z.object({
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
 const registerSchema = z.object({
-  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+  mobile: z.string().length(10, "Mobile number must be exactly 10 digits"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   age: z.coerce.number().min(18, "Must be at least 18 years old").max(70, "Maximum age is 70"),
   aadhaarNumber: z.string().length(12, "Aadhaar number must be exactly 12 digits").regex(/^\d+$/, "Only digits allowed"),
   licenseNumber: z.string().min(5, "License number is required"),
 });
 
+type AuthStep = "mobile" | "otp" | "register";
+
 export default function DriverRegister() {
   const [, navigate] = useLocation();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [step, setStep] = useState<AuthStep>("mobile");
   const [isLoading, setIsLoading] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [displayOtp, setDisplayOtp] = useState<string | null>(null);
   const { toast } = useToast();
-  const { driver, isDriverLoggedIn, loginDriver, registerDriver, logout } = useAuth();
+  const { driver, isDriverLoggedIn, loginDriver, registerDriver, logout, sendOtp, verifyOtp } = useAuth();
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const mobileForm = useForm<z.infer<typeof mobileSchema>>({
+    resolver: zodResolver(mobileSchema),
     defaultValues: { mobile: "" },
+  });
+
+  const otpForm = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: { otp: "" },
   });
 
   const registerForm = useForm<z.infer<typeof registerSchema>>({
@@ -42,19 +56,44 @@ export default function DriverRegister() {
     defaultValues: { mobile: "", name: "", age: 25, aadhaarNumber: "", licenseNumber: "" },
   });
 
-  const handleLogin = async (data: z.infer<typeof loginSchema>) => {
+  const handleSendOtp = async (data: z.infer<typeof mobileSchema>) => {
     setIsLoading(true);
-    const result = await loginDriver(data.mobile);
+    const result = await sendOtp(data.mobile, "driver");
     setIsLoading(false);
     
     if (result.success) {
-      toast({ title: "Welcome back!", description: "You are now logged in." });
-    } else if (result.needsRegistration) {
+      setMobileNumber(data.mobile);
       registerForm.setValue("mobile", data.mobile);
-      setMode("register");
-      toast({ title: "New driver", description: "Please complete your registration." });
+      if (result.otp) {
+        setDisplayOtp(result.otp);
+      }
+      setStep("otp");
+      toast({ title: "OTP Sent", description: "Please check your mobile for the 6-digit code." });
     } else {
-      toast({ title: "Login failed", description: result.error, variant: "destructive" });
+      toast({ title: "Failed to send OTP", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleVerifyOtp = async (data: z.infer<typeof otpSchema>) => {
+    setIsLoading(true);
+    const result = await verifyOtp(mobileNumber, data.otp, "driver");
+    
+    if (result.success) {
+      setDisplayOtp(null);
+      const loginResult = await loginDriver(mobileNumber);
+      setIsLoading(false);
+      
+      if (loginResult.success) {
+        toast({ title: "Welcome back!", description: "You are now logged in." });
+      } else if (loginResult.needsRegistration) {
+        setStep("register");
+        toast({ title: "New driver", description: "Please complete your registration." });
+      } else {
+        toast({ title: "Login failed", description: loginResult.error, variant: "destructive" });
+      }
+    } else {
+      setIsLoading(false);
+      toast({ title: "Invalid OTP", description: result.error, variant: "destructive" });
     }
   };
 
@@ -76,6 +115,21 @@ export default function DriverRegister() {
   const handleLogout = async () => {
     await logout();
     toast({ title: "Logged out", description: "You have been logged out." });
+  };
+
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    const result = await sendOtp(mobileNumber, "driver");
+    setIsLoading(false);
+    
+    if (result.success) {
+      if (result.otp) {
+        setDisplayOtp(result.otp);
+      }
+      toast({ title: "OTP Resent", description: "A new code has been sent to your mobile." });
+    } else {
+      toast({ title: "Failed to resend OTP", description: result.error, variant: "destructive" });
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -184,20 +238,20 @@ export default function DriverRegister() {
               </CardContent>
             </Card>
           </div>
-        ) : mode === "login" ? (
+        ) : step === "mobile" ? (
           <Card>
             <CardHeader className="text-center">
               <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
                 <LogIn className="h-8 w-8 text-primary" />
               </div>
               <CardTitle>Driver Login</CardTitle>
-              <CardDescription>Enter your mobile number to login</CardDescription>
+              <CardDescription>Enter your mobile number to receive OTP</CardDescription>
             </CardHeader>
             <CardContent>
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+              <Form {...mobileForm}>
+                <form onSubmit={mobileForm.handleSubmit(handleSendOtp)} className="space-y-4">
                   <FormField
-                    control={loginForm.control}
+                    control={mobileForm.control}
                     name="mobile"
                     render={({ field }) => (
                       <FormItem>
@@ -205,20 +259,73 @@ export default function DriverRegister() {
                         <FormControl>
                           <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input {...field} placeholder="Enter your mobile number" className="pl-10" data-testid="input-driver-login-mobile" />
+                            <Input {...field} placeholder="Enter 10-digit mobile number" className="pl-10" maxLength={10} data-testid="input-driver-login-mobile" />
                           </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={isLoading} className="w-full" data-testid="button-driver-login">
+                  <Button type="submit" disabled={isLoading} className="w-full" data-testid="button-send-otp">
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Login
+                    Send OTP
                   </Button>
-                  <Button type="button" variant="outline" className="w-full" onClick={() => setMode("register")} data-testid="button-switch-register">
-                    New driver? Register here
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        ) : step === "otp" ? (
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
+                <KeyRound className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle>Verify OTP</CardTitle>
+              <CardDescription>Enter the 6-digit code sent to {mobileNumber}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {displayOtp && (
+                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+                  <p className="text-xs text-amber-600 mb-1">Development Mode - OTP:</p>
+                  <p className="font-mono text-2xl font-bold text-amber-700">{displayOtp}</p>
+                </div>
+              )}
+              <Form {...otpForm}>
+                <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4">
+                  <FormField
+                    control={otpForm.control}
+                    name="otp"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col items-center">
+                        <FormLabel>One-Time Password</FormLabel>
+                        <FormControl>
+                          <InputOTP maxLength={6} {...field} data-testid="input-otp">
+                            <InputOTPGroup>
+                              <InputOTPSlot index={0} />
+                              <InputOTPSlot index={1} />
+                              <InputOTPSlot index={2} />
+                              <InputOTPSlot index={3} />
+                              <InputOTPSlot index={4} />
+                              <InputOTPSlot index={5} />
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={isLoading} className="w-full" data-testid="button-verify-otp">
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Verify OTP
                   </Button>
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1" onClick={() => setStep("mobile")} data-testid="button-change-number">
+                      Change Number
+                    </Button>
+                    <Button type="button" variant="outline" className="flex-1" onClick={handleResendOtp} disabled={isLoading} data-testid="button-resend-otp">
+                      Resend OTP
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -244,9 +351,12 @@ export default function DriverRegister() {
                         <FormControl>
                           <div className="relative">
                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input {...field} placeholder="Enter your mobile number" className="pl-10" data-testid="input-driver-mobile" />
+                            <Input {...field} placeholder="Enter your mobile number" className="pl-10" disabled data-testid="input-driver-mobile" />
                           </div>
                         </FormControl>
+                        <FormDescription className="text-xs flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3 text-green-500" /> Mobile verified
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -324,8 +434,8 @@ export default function DriverRegister() {
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Submit for Verification
                   </Button>
-                  <Button type="button" variant="outline" className="w-full" onClick={() => setMode("login")} data-testid="button-switch-login">
-                    Already registered? Login
+                  <Button type="button" variant="outline" className="w-full" onClick={() => setStep("mobile")} data-testid="button-back-to-login">
+                    Back to Login
                   </Button>
                 </form>
               </Form>

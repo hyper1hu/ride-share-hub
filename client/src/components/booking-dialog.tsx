@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Loader2, MapPin, ArrowRight, Car, Clock, CheckCircle2, Users, IndianRupee, LogIn, User, Phone } from "lucide-react";
+import { Loader2, MapPin, ArrowRight, Car, Clock, CheckCircle2, Users, IndianRupee, LogIn, User, Phone, KeyRound, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { insertBookingSchema, type InsertBooking, type Car as CarType } from "@shared/schema";
 import { useState, useEffect } from "react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface BookingDialogProps {
   open: boolean;
@@ -24,26 +25,39 @@ interface BookingDialogProps {
 
 const bookingFormSchema = insertBookingSchema.extend({ seatsBooked: z.number().min(1, "Select at least 1 seat") });
 
-const loginSchema = z.object({
-  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+const mobileSchema = z.object({
+  mobile: z.string().length(10, "Mobile number must be exactly 10 digits").regex(/^\d+$/, "Only digits allowed"),
+});
+
+const otpSchema = z.object({
+  otp: z.string().length(6, "OTP must be exactly 6 digits"),
 });
 
 const registerSchema = z.object({
-  mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
+  mobile: z.string().length(10, "Mobile number must be exactly 10 digits"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   age: z.coerce.number().min(18, "Must be at least 18 years old").max(100, "Invalid age"),
 });
 
+type AuthStep = "mobile" | "otp" | "register";
+
 export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
   const { toast } = useToast();
-  const { customer, isCustomerLoggedIn, loginCustomer, registerCustomer } = useAuth();
+  const { customer, isCustomerLoggedIn, loginCustomer, registerCustomer, sendOtp, verifyOtp } = useAuth();
   const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authStep, setAuthStep] = useState<AuthStep>("mobile");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [displayOtp, setDisplayOtp] = useState<string | null>(null);
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+  const mobileForm = useForm<z.infer<typeof mobileSchema>>({
+    resolver: zodResolver(mobileSchema),
     defaultValues: { mobile: "" },
+  });
+
+  const otpForm = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: { otp: "" },
   });
 
   const registerForm = useForm<z.infer<typeof registerSchema>>({
@@ -76,19 +90,44 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
     return baseFare;
   };
 
-  const handleLogin = async (data: z.infer<typeof loginSchema>) => {
+  const handleSendOtp = async (data: z.infer<typeof mobileSchema>) => {
     setIsAuthLoading(true);
-    const result = await loginCustomer(data.mobile);
+    const result = await sendOtp(data.mobile, "customer");
     setIsAuthLoading(false);
     
     if (result.success) {
-      toast({ title: "Welcome back!", description: "You can now book your ride." });
-    } else if (result.needsRegistration) {
+      setMobileNumber(data.mobile);
       registerForm.setValue("mobile", data.mobile);
-      setAuthMode("register");
-      toast({ title: "New user", description: "Please complete your registration." });
+      if (result.otp) {
+        setDisplayOtp(result.otp);
+      }
+      setAuthStep("otp");
+      toast({ title: "OTP Sent", description: "Please check your mobile for the 6-digit code." });
     } else {
-      toast({ title: "Login failed", description: result.error, variant: "destructive" });
+      toast({ title: "Failed to send OTP", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleVerifyOtp = async (data: z.infer<typeof otpSchema>) => {
+    setIsAuthLoading(true);
+    const result = await verifyOtp(mobileNumber, data.otp, "customer");
+    
+    if (result.success) {
+      setDisplayOtp(null);
+      const loginResult = await loginCustomer(mobileNumber);
+      setIsAuthLoading(false);
+      
+      if (loginResult.success) {
+        toast({ title: "Welcome back!", description: "You can now book your ride." });
+      } else if (loginResult.needsRegistration) {
+        setAuthStep("register");
+        toast({ title: "New user", description: "Please complete your registration." });
+      } else {
+        toast({ title: "Login failed", description: loginResult.error, variant: "destructive" });
+      }
+    } else {
+      setIsAuthLoading(false);
+      toast({ title: "Invalid OTP", description: result.error, variant: "destructive" });
     }
   };
 
@@ -101,6 +140,21 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
       toast({ title: "Welcome to RideShare!", description: "You can now book your ride." });
     } else {
       toast({ title: "Registration failed", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsAuthLoading(true);
+    const result = await sendOtp(mobileNumber, "customer");
+    setIsAuthLoading(false);
+    
+    if (result.success) {
+      if (result.otp) {
+        setDisplayOtp(result.otp);
+      }
+      toast({ title: "OTP Resent", description: "A new code has been sent to your mobile." });
+    } else {
+      toast({ title: "Failed to resend OTP", description: result.error, variant: "destructive" });
     }
   };
 
@@ -130,9 +184,12 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
 
   const handleClose = () => { 
     setBookingSuccess(false); 
-    setAuthMode("login");
+    setAuthStep("mobile");
+    setMobileNumber("");
+    setDisplayOtp(null);
     form.reset(); 
-    loginForm.reset();
+    mobileForm.reset();
+    otpForm.reset();
     registerForm.reset();
     onOpenChange(false); 
   };
@@ -195,8 +252,12 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <LogIn className="h-5 w-5 text-primary" />
-              {authMode === "login" ? "Login to Book" : "Create Account"}
+              {authStep === "mobile" && <LogIn className="h-5 w-5 text-primary" />}
+              {authStep === "otp" && <KeyRound className="h-5 w-5 text-primary" />}
+              {authStep === "register" && <User className="h-5 w-5 text-primary" />}
+              {authStep === "mobile" && "Login to Book"}
+              {authStep === "otp" && "Verify OTP"}
+              {authStep === "register" && "Create Account"}
             </DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-3 mt-3">
@@ -207,48 +268,100 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
                   <span className="font-medium text-sm">{car.destination}</span>
                 </div>
                 <p className="text-sm">
-                  {authMode === "login" 
-                    ? "Enter your mobile number to login and book this ride"
-                    : "Complete your profile to start booking rides"
-                  }
+                  {authStep === "mobile" && "Enter your mobile number to receive OTP"}
+                  {authStep === "otp" && `Enter the 6-digit code sent to ${mobileNumber}`}
+                  {authStep === "register" && "Complete your profile to start booking rides"}
                 </p>
               </div>
             </DialogDescription>
           </DialogHeader>
 
-          {authMode === "login" ? (
-            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+          {authStep === "mobile" && (
+            <form onSubmit={mobileForm.handleSubmit(handleSendOtp)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    {...loginForm.register("mobile")}
-                    placeholder="Enter your mobile number" 
+                    {...mobileForm.register("mobile")}
+                    placeholder="Enter 10-digit mobile number" 
                     className="pl-10"
+                    maxLength={10}
                     data-testid="input-booking-login-mobile"
                   />
                 </div>
-                {loginForm.formState.errors.mobile && (
-                  <p className="text-sm text-destructive">{loginForm.formState.errors.mobile.message}</p>
+                {mobileForm.formState.errors.mobile && (
+                  <p className="text-sm text-destructive">{mobileForm.formState.errors.mobile.message}</p>
                 )}
               </div>
-              <div className="flex flex-col gap-3">
-                <Button type="submit" disabled={isAuthLoading} className="w-full" data-testid="button-booking-login">
-                  {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Continue
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setAuthMode("register")}
-                >
-                  New user? Create account
-                </Button>
-              </div>
+              <Button type="submit" disabled={isAuthLoading} className="w-full" data-testid="button-booking-send-otp">
+                {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send OTP
+              </Button>
             </form>
-          ) : (
+          )}
+
+          {authStep === "otp" && (
+            <div className="space-y-4">
+              {displayOtp && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
+                  <p className="text-xs text-amber-600 mb-1">Development Mode - OTP:</p>
+                  <p className="font-mono text-2xl font-bold text-amber-700">{displayOtp}</p>
+                </div>
+              )}
+              <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4">
+                <div className="flex flex-col items-center space-y-2">
+                  <Label>One-Time Password</Label>
+                  <InputOTP 
+                    maxLength={6} 
+                    value={otpForm.watch("otp")} 
+                    onChange={(value) => otpForm.setValue("otp", value)}
+                    data-testid="input-booking-otp"
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                  {otpForm.formState.errors.otp && (
+                    <p className="text-sm text-destructive">{otpForm.formState.errors.otp.message}</p>
+                  )}
+                </div>
+                <Button type="submit" disabled={isAuthLoading} className="w-full" data-testid="button-booking-verify-otp">
+                  {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Verify OTP
+                </Button>
+                <div className="flex gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => { setAuthStep("mobile"); setDisplayOtp(null); }}
+                    data-testid="button-booking-change-number"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Change
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={handleResendOtp}
+                    disabled={isAuthLoading}
+                    data-testid="button-booking-resend-otp"
+                  >
+                    Resend OTP
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {authStep === "register" && (
             <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="mobile">Mobile Number</Label>
@@ -258,12 +371,13 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
                     {...registerForm.register("mobile")}
                     placeholder="Enter your mobile number" 
                     className="pl-10"
+                    disabled
                     data-testid="input-booking-register-mobile"
                   />
                 </div>
-                {registerForm.formState.errors.mobile && (
-                  <p className="text-sm text-destructive">{registerForm.formState.errors.mobile.message}</p>
-                )}
+                <p className="text-xs text-green-600 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" /> Mobile verified
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -292,20 +406,18 @@ export function BookingDialog({ open, onOpenChange, car }: BookingDialogProps) {
                   <p className="text-sm text-destructive">{registerForm.formState.errors.age.message}</p>
                 )}
               </div>
-              <div className="flex flex-col gap-3">
-                <Button type="submit" disabled={isAuthLoading} className="w-full" data-testid="button-booking-register">
-                  {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setAuthMode("login")}
-                >
-                  Already have an account? Login
-                </Button>
-              </div>
+              <Button type="submit" disabled={isAuthLoading} className="w-full" data-testid="button-booking-register">
+                {isAuthLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Account
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setAuthStep("mobile")}
+              >
+                Back to Login
+              </Button>
             </form>
           )}
         </DialogContent>
