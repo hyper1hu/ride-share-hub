@@ -1,0 +1,335 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
+import '../models/car.dart';
+import '../widgets/add_car_dialog.dart';
+
+class DriverScreen extends StatefulWidget {
+  const DriverScreen({super.key});
+
+  @override
+  State<DriverScreen> createState() => _DriverScreenState();
+}
+
+class _DriverScreenState extends State<DriverScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AppProvider>().fetchCars();
+    });
+  }
+
+  IconData _getVehicleIcon(String type) {
+    switch (type) {
+      case 'bus':
+      case 'minibus':
+        return Icons.directions_bus;
+      case 'motorcycle':
+        return Icons.two_wheeler;
+      case 'auto_rickshaw':
+        return Icons.electric_rickshaw;
+      case 'truck':
+        return Icons.local_shipping;
+      case 'suv':
+        return Icons.directions_car_filled;
+      case 'van':
+        return Icons.airport_shuttle;
+      default:
+        return Icons.directions_car;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appProvider = Provider.of<AppProvider>(context);
+    final driver = appProvider.driver;
+    final cars = appProvider.cars;
+
+    if (!appProvider.isDriverLoggedIn || driver == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Driver Dashboard')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                const SizedBox(height: 24),
+                Text('Login Required', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: 8),
+                Text(
+                  'Please login or register to access your driver dashboard.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                ),
+                const SizedBox(height: 32),
+                FilledButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+                  icon: const Icon(Icons.login),
+                  label: const Text('Login / Register'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (!driver.isApproved) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Driver Dashboard'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+            ),
+          ],
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  driver.isPending ? Icons.hourglass_empty : Icons.cancel,
+                  size: 64,
+                  color: driver.isPending ? Colors.orange : Colors.red,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  driver.isPending ? 'Verification Pending' : 'Verification Rejected',
+                  style: theme.textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  driver.isPending
+                      ? 'Your registration is being reviewed by our admin team. You will be able to list vehicles once approved.'
+                      : 'Your registration was rejected. Please contact support for assistance.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                ),
+                const SizedBox(height: 32),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+                  icon: const Icon(Icons.person),
+                  label: const Text('View Profile'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Icon(Icons.directions_car, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Driver Dashboard'),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(appProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => appProvider.toggleTheme(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => Navigator.pushNamed(context, '/driver-register'),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddCarDialog(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Vehicle'),
+      ),
+      body: cars.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.directions_car_outlined, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                  const SizedBox(height: 16),
+                  Text('No vehicles listed yet', style: theme.textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  Text('Welcome ${driver.name}! Start earning by listing your vehicle.',
+                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => _showAddCarDialog(context),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Your First Vehicle'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: cars.length,
+              itemBuilder: (context, index) {
+                final car = cars[index];
+                return _DriverCarCard(car: car, getVehicleIcon: _getVehicleIcon);
+              },
+            ),
+    );
+  }
+
+  void _showAddCarDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => const AddCarDialog(),
+    );
+  }
+}
+
+class _DriverCarCard extends StatelessWidget {
+  final Car car;
+  final IconData Function(String) getVehicleIcon;
+
+  const _DriverCarCard({required this.car, required this.getVehicleIcon});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final appProvider = Provider.of<AppProvider>(context);
+    final bookings = appProvider.getBookingsForCar(car.id);
+    final availableSeats = appProvider.getAvailableSeats(car);
+    final vehicleIcon = getVehicleIcon(car.vehicleType);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(vehicleIcon, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(car.carModel, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: theme.colorScheme.outline),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(car.vehicleTypeLabel, style: const TextStyle(fontSize: 10)),
+                          ),
+                        ],
+                      ),
+                      Text(car.carNumber, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text('Available', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500)),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                  onPressed: () => _confirmDelete(context, car),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _InfoRow(icon: Icons.location_on, text: '${car.origin} → ${car.destination}'),
+            const SizedBox(height: 8),
+            _InfoRow(icon: Icons.access_time, text: 'Departs ${car.departureTime}, Returns ${car.returnTime}'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _InfoRow(icon: Icons.event_seat, text: '$availableSeats of ${car.seatsAvailable} seats')),
+                Text('₹${car.fare.toStringAsFixed(0)} / ₹${(car.fare + car.returnFare).toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            if (bookings.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${bookings.length} booking${bookings.length != 1 ? 's' : ''}'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, Car car) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove vehicle listing?'),
+        content: const Text('This will remove your vehicle listing. This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () {
+              Provider.of<AppProvider>(context, listen: false).removeCar(car.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Vehicle listing removed')),
+              );
+            },
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+        const SizedBox(width: 8),
+        Flexible(child: Text(text, style: const TextStyle(fontSize: 14))),
+      ],
+    );
+  }
+}
