@@ -8,6 +8,14 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
+export interface OtpRecord {
+  mobile: string;
+  otp: string;
+  expiresAt: Date;
+  verified: boolean;
+  userType: "customer" | "driver";
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -38,6 +46,11 @@ export interface IStorage {
   getBookingsByCustomerId(customerId: string): Promise<Booking[]>;
   createBooking(booking: InsertBooking, totalFare: number): Promise<Booking>;
   updateBooking(id: string, booking: Partial<Booking>): Promise<Booking | undefined>;
+  
+  createOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord>;
+  getOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord | undefined>;
+  verifyOtp(mobile: string, otp: string, userType: "customer" | "driver"): Promise<boolean>;
+  clearOtp(mobile: string, userType: "customer" | "driver"): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -46,6 +59,7 @@ export class MemStorage implements IStorage {
   private drivers: Map<string, Driver>;
   private cars: Map<string, Car>;
   private bookings: Map<string, Booking>;
+  private otps: Map<string, OtpRecord>;
 
   constructor() {
     this.users = new Map();
@@ -53,6 +67,7 @@ export class MemStorage implements IStorage {
     this.drivers = new Map();
     this.cars = new Map();
     this.bookings = new Map();
+    this.otps = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -225,6 +240,54 @@ export class MemStorage implements IStorage {
     const updatedBooking = { ...booking, ...updates };
     this.bookings.set(id, updatedBooking);
     return updatedBooking;
+  }
+
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  async createOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord> {
+    const key = `${userType}:${mobile}`;
+    const otp = this.generateOtp();
+    const record: OtpRecord = {
+      mobile,
+      otp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      verified: false,
+      userType,
+    };
+    this.otps.set(key, record);
+    return record;
+  }
+
+  async getOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord | undefined> {
+    const key = `${userType}:${mobile}`;
+    const record = this.otps.get(key);
+    if (!record) return undefined;
+    if (new Date() > record.expiresAt) {
+      this.otps.delete(key);
+      return undefined;
+    }
+    return record;
+  }
+
+  async verifyOtp(mobile: string, otp: string, userType: "customer" | "driver"): Promise<boolean> {
+    const key = `${userType}:${mobile}`;
+    const record = this.otps.get(key);
+    if (!record) return false;
+    if (new Date() > record.expiresAt) {
+      this.otps.delete(key);
+      return false;
+    }
+    if (record.otp !== otp) return false;
+    record.verified = true;
+    this.otps.set(key, record);
+    return true;
+  }
+
+  async clearOtp(mobile: string, userType: "customer" | "driver"): Promise<void> {
+    const key = `${userType}:${mobile}`;
+    this.otps.delete(key);
   }
 }
 

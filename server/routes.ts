@@ -28,23 +28,75 @@ const requireDriverAuth = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+const otpSchema = z.object({
+  mobile: z.string().min(10).max(10),
+  userType: z.enum(["customer", "driver"]),
+});
+
+const verifyOtpSchema = z.object({
+  mobile: z.string().min(10).max(10),
+  otp: z.string().length(6),
+  userType: z.enum(["customer", "driver"]),
+});
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
 
+  app.post("/api/auth/otp/send", async (req, res) => {
+    try {
+      const { mobile, userType } = otpSchema.parse(req.body);
+      const otpRecord = await storage.createOtp(mobile, userType);
+      console.log(`[OTP] ${userType} ${mobile}: ${otpRecord.otp}`);
+      res.json({ 
+        success: true, 
+        message: "OTP sent successfully",
+        expiresAt: otpRecord.expiresAt,
+        otp: process.env.NODE_ENV === "development" ? otpRecord.otp : undefined,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to send OTP" });
+    }
+  });
+
+  app.post("/api/auth/otp/verify", async (req, res) => {
+    try {
+      const { mobile, otp, userType } = verifyOtpSchema.parse(req.body);
+      const verified = await storage.verifyOtp(mobile, otp, userType);
+      if (!verified) {
+        return res.status(400).json({ error: "Invalid or expired OTP" });
+      }
+      res.json({ success: true, message: "OTP verified successfully" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to verify OTP" });
+    }
+  });
+
   app.post("/api/auth/customer/register", async (req, res) => {
     try {
       const validatedData = insertCustomerSchema.parse(req.body);
+      const otpRecord = await storage.getOtp(validatedData.mobile, "customer");
+      if (!otpRecord || !otpRecord.verified) {
+        return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
+      }
       const existingCustomer = await storage.getCustomerByMobile(validatedData.mobile);
       if (existingCustomer) {
         req.session.customerId = existingCustomer.id;
         req.session.userType = "customer";
+        await storage.clearOtp(validatedData.mobile, "customer");
         return res.json({ customer: existingCustomer, message: "Welcome back!" });
       }
       const customer = await storage.createCustomer(validatedData);
       req.session.customerId = customer.id;
       req.session.userType = "customer";
+      await storage.clearOtp(validatedData.mobile, "customer");
       res.status(201).json({ customer, message: "Registration successful!" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -57,12 +109,18 @@ export async function registerRoutes(
   app.post("/api/auth/customer/login", async (req, res) => {
     try {
       const { mobile } = loginSchema.parse(req.body);
+      const otpRecord = await storage.getOtp(mobile, "customer");
+      if (!otpRecord || !otpRecord.verified) {
+        return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
+      }
       const customer = await storage.getCustomerByMobile(mobile);
       if (!customer) {
+        await storage.clearOtp(mobile, "customer");
         return res.status(404).json({ error: "No account found with this mobile number", needsRegistration: true });
       }
       req.session.customerId = customer.id;
       req.session.userType = "customer";
+      await storage.clearOtp(mobile, "customer");
       res.json({ customer, message: "Login successful!" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -87,13 +145,19 @@ export async function registerRoutes(
   app.post("/api/auth/driver/register", async (req, res) => {
     try {
       const validatedData = insertDriverSchema.parse(req.body);
+      const otpRecord = await storage.getOtp(validatedData.mobile, "driver");
+      if (!otpRecord || !otpRecord.verified) {
+        return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
+      }
       const existingDriver = await storage.getDriverByMobile(validatedData.mobile);
       if (existingDriver) {
+        await storage.clearOtp(validatedData.mobile, "driver");
         return res.status(400).json({ error: "A driver account already exists with this mobile number" });
       }
       const driver = await storage.createDriver(validatedData);
       req.session.driverId = driver.id;
       req.session.userType = "driver";
+      await storage.clearOtp(validatedData.mobile, "driver");
       res.status(201).json({ 
         driver, 
         message: "Registration submitted! Please wait for admin verification before you can list vehicles." 
@@ -109,12 +173,18 @@ export async function registerRoutes(
   app.post("/api/auth/driver/login", async (req, res) => {
     try {
       const { mobile } = loginSchema.parse(req.body);
+      const otpRecord = await storage.getOtp(mobile, "driver");
+      if (!otpRecord || !otpRecord.verified) {
+        return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
+      }
       const driver = await storage.getDriverByMobile(mobile);
       if (!driver) {
+        await storage.clearOtp(mobile, "driver");
         return res.status(404).json({ error: "No driver account found with this mobile number", needsRegistration: true });
       }
       req.session.driverId = driver.id;
       req.session.userType = "driver";
+      await storage.clearOtp(mobile, "driver");
       res.json({ driver, message: "Login successful!" });
     } catch (error) {
       if (error instanceof z.ZodError) {
