@@ -87,6 +87,7 @@ export default function Admin() {
       await apiRequest("POST", "/api/auth/admin/logout");
     },
     onSuccess: () => {
+      queryClient.setQueryData(["/api/auth/admin/me"], null);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/admin/me"] });
       toast({ title: "Logged out", description: "You have been logged out successfully." });
     },
