@@ -59,14 +59,18 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - `GET /api/bookings` - List all bookings
 - `POST /api/bookings` - Create a booking (requires customer login)
 
+**OTP Authentication:**
+- `POST /api/auth/otp/send` - Send 6-digit OTP (5-minute expiry)
+- `POST /api/auth/otp/verify` - Verify OTP before login/register
+
 **Customer Auth:**
-- `POST /api/auth/customer/register` - Register customer (mobile, name, age)
-- `POST /api/auth/customer/login` - Login with mobile number
+- `POST /api/auth/customer/register` - Register customer (requires verified OTP)
+- `POST /api/auth/customer/login` - Login with mobile (requires verified OTP)
 - `GET /api/auth/customer/me` - Get current customer session
 
 **Driver Auth:**
-- `POST /api/auth/driver/register` - Register driver (requires Aadhaar, license)
-- `POST /api/auth/driver/login` - Login with mobile number
+- `POST /api/auth/driver/register` - Register driver (requires verified OTP, Aadhaar, license)
+- `POST /api/auth/driver/login` - Login with mobile (requires verified OTP)
 - `GET /api/auth/driver/me` - Get current driver session
 - `GET /api/drivers` - List all drivers (admin)
 - `PATCH /api/drivers/:id/verify` - Approve/reject driver (admin)
@@ -142,10 +146,15 @@ flutter run
 - Material 3 design
 
 ## Recent Changes (January 2026)
+- **OTP Authentication System**: 6-digit OTP with 5-minute expiry for enhanced security
+  - 3-step flow: mobile entry → OTP verification → login/register
+  - Development mode displays OTP in UI for testing
+  - InputOTP component with visual 6-digit input slots (web)
+  - OTP methods in Flutter ApiService and AppProvider
 - Created comprehensive Flutter mobile app (15 Dart files)
 - Added GPS location service with geolocator
-- Added driver registration screen with verification flow
-- Added customer authentication flow in booking
+- Added driver registration screen with OTP verification flow
+- Added customer authentication flow with OTP in booking dialog
 - Updated all prices to Indian Rupees (₹)
 - Added 441+ comprehensive West Bengal locations
 - Added support for 8 vehicle types

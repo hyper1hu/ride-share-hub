@@ -112,7 +112,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginCustomer = async (mobile: string): Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }> => {
     try {
-      const response = await apiRequest("POST", "/api/auth/customer/login", { mobile });
+      const response = await fetch("/api/auth/customer/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile }),
+        credentials: "include",
+      });
       const data = await response.json();
       if (response.ok) {
         setCustomer(data.customer);
@@ -142,7 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginDriver = async (mobile: string): Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }> => {
     try {
-      const response = await apiRequest("POST", "/api/auth/driver/login", { mobile });
+      const response = await fetch("/api/auth/driver/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mobile }),
+        credentials: "include",
+      });
       const data = await response.json();
       if (response.ok) {
         setDriver(data.driver);

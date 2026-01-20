@@ -115,7 +115,6 @@ export async function registerRoutes(
       }
       const customer = await storage.getCustomerByMobile(mobile);
       if (!customer) {
-        await storage.clearOtp(mobile, "customer");
         return res.status(404).json({ error: "No account found with this mobile number", needsRegistration: true });
       }
       req.session.customerId = customer.id;
@@ -179,7 +178,6 @@ export async function registerRoutes(
       }
       const driver = await storage.getDriverByMobile(mobile);
       if (!driver) {
-        await storage.clearOtp(mobile, "driver");
         return res.status(404).json({ error: "No driver account found with this mobile number", needsRegistration: true });
       }
       req.session.driverId = driver.id;
