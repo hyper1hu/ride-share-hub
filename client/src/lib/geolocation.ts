@@ -129,33 +129,40 @@ export function getCurrentLocation(): Promise<Coordinates> {
       reject(new Error("Geolocation is not supported by your browser"));
       return;
     }
+
+    // Add a backup timeout in case browser's timeout doesn't fire
+    const backupTimeout = setTimeout(() => {
+      reject(new Error("Location request timed out. Please try again or select a location manually."));
+    }, 15000);
     
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        clearTimeout(backupTimeout);
         resolve({
           lat: position.coords.latitude,
           lng: position.coords.longitude
         });
       },
       (error) => {
+        clearTimeout(backupTimeout);
         switch(error.code) {
           case error.PERMISSION_DENIED:
-            reject(new Error("Please allow location access to find nearby pickup points"));
+            reject(new Error("Please allow location access in your browser settings to find nearby pickup points"));
             break;
           case error.POSITION_UNAVAILABLE:
-            reject(new Error("Location information unavailable"));
+            reject(new Error("Location information unavailable. Please select a location manually."));
             break;
           case error.TIMEOUT:
-            reject(new Error("Location request timed out"));
+            reject(new Error("Location request timed out. Please try again or select a location manually."));
             break;
           default:
-            reject(new Error("Unable to get your location"));
+            reject(new Error("Unable to get your location. Please select a location manually."));
         }
       },
       {
-        enableHighAccuracy: true,
+        enableHighAccuracy: false, // Changed to false for faster response
         timeout: 10000,
-        maximumAge: 60000
+        maximumAge: 300000 // 5 minutes cache
       }
     );
   });
