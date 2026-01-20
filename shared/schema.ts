@@ -1,3 +1,5 @@
+import { pgTable, text, integer, timestamp, varchar, serial } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const vehicleTypes = ["car", "suv", "van", "bus", "minibus", "motorcycle", "auto_rickshaw", "truck"] as const;
@@ -6,73 +8,70 @@ export type VehicleType = typeof vehicleTypes[number];
 export const driverVerificationStatus = ["pending", "approved", "rejected"] as const;
 export type DriverVerificationStatus = typeof driverVerificationStatus[number];
 
-export const customerSchema = z.object({
-  id: z.string(),
-  mobile: z.string(),
-  name: z.string(),
-  age: z.number(),
-  createdAt: z.string(),
+export const customers = pgTable("customers", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  mobile: varchar("mobile", { length: 15 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
+  age: integer("age").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCustomerSchema = z.object({
+export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true }).extend({
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   age: z.number().min(18, "Must be at least 18 years old").max(100, "Invalid age"),
 });
 
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
-export type Customer = z.infer<typeof customerSchema>;
+export type Customer = typeof customers.$inferSelect;
 
-export const driverSchema = z.object({
-  id: z.string(),
-  mobile: z.string(),
-  name: z.string(),
-  age: z.number(),
-  aadhaarNumber: z.string(),
-  licenseNumber: z.string(),
-  aadhaarImage: z.string().optional(),
-  licenseImage: z.string().optional(),
-  rcImage: z.string().optional(),
-  verificationStatus: z.enum(driverVerificationStatus),
-  rejectionReason: z.string().optional(),
-  createdAt: z.string(),
+export const drivers = pgTable("drivers", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  mobile: varchar("mobile", { length: 15 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
+  age: integer("age").notNull(),
+  aadhaarNumber: varchar("aadhaar_number", { length: 12 }).notNull(),
+  licenseNumber: varchar("license_number", { length: 50 }).notNull(),
+  aadhaarImage: text("aadhaar_image"),
+  licenseImage: text("license_image"),
+  rcImage: text("rc_image"),
+  verificationStatus: varchar("verification_status", { length: 20 }).notNull().default("pending"),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertDriverSchema = z.object({
+export const insertDriverSchema = createInsertSchema(drivers).omit({ id: true, createdAt: true, verificationStatus: true, rejectionReason: true }).extend({
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   age: z.number().min(18, "Must be at least 18 years old").max(70, "Maximum age is 70"),
   aadhaarNumber: z.string().min(12, "Aadhaar number must be 12 digits").max(12, "Aadhaar number must be 12 digits"),
   licenseNumber: z.string().min(5, "License number is required"),
-  aadhaarImage: z.string().optional(),
-  licenseImage: z.string().optional(),
-  rcImage: z.string().optional(),
 });
 
 export type InsertDriver = z.infer<typeof insertDriverSchema>;
-export type Driver = z.infer<typeof driverSchema>;
+export type Driver = typeof drivers.$inferSelect;
 
-export const carSchema = z.object({
-  id: z.string(),
-  driverId: z.string(),
-  vehicleType: z.enum(vehicleTypes),
-  driverName: z.string(),
-  driverPhone: z.string(),
-  carModel: z.string(),
-  carNumber: z.string(),
-  origin: z.string(),
-  destination: z.string(),
-  waypoints: z.array(z.string()).optional(),
-  fare: z.number(),
-  returnFare: z.number(),
-  departureTime: z.string(),
-  returnTime: z.string(),
-  seatsAvailable: z.number(),
-  status: z.enum(["available", "on_trip", "returning"]),
-  createdAt: z.string(),
+export const cars = pgTable("cars", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  driverId: varchar("driver_id", { length: 36 }).notNull(),
+  vehicleType: varchar("vehicle_type", { length: 20 }).notNull(),
+  driverName: varchar("driver_name", { length: 100 }).notNull(),
+  driverPhone: varchar("driver_phone", { length: 15 }).notNull(),
+  carModel: varchar("car_model", { length: 100 }).notNull(),
+  carNumber: varchar("car_number", { length: 20 }).notNull(),
+  origin: varchar("origin", { length: 200 }).notNull(),
+  destination: varchar("destination", { length: 200 }).notNull(),
+  waypoints: text("waypoints").array(),
+  fare: integer("fare").notNull(),
+  returnFare: integer("return_fare").notNull(),
+  departureTime: varchar("departure_time", { length: 10 }).notNull(),
+  returnTime: varchar("return_time", { length: 10 }).notNull(),
+  seatsAvailable: integer("seats_available").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("available"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertCarSchema = z.object({
+export const insertCarSchema = createInsertSchema(cars).omit({ id: true, createdAt: true, status: true }).extend({
   driverId: z.string().optional(),
   vehicleType: z.enum(vehicleTypes),
   driverName: z.string().min(2, "Driver name must be at least 2 characters"),
@@ -90,24 +89,24 @@ export const insertCarSchema = z.object({
 });
 
 export type InsertCar = z.infer<typeof insertCarSchema>;
-export type Car = z.infer<typeof carSchema>;
+export type Car = typeof cars.$inferSelect;
 
-export const bookingSchema = z.object({
-  id: z.string(),
-  carId: z.string(),
-  customerId: z.string(),
-  customerName: z.string(),
-  customerPhone: z.string(),
-  pickupLocation: z.string().optional(),
-  dropLocation: z.string().optional(),
-  seatsBooked: z.number(),
-  tripType: z.enum(["one_way", "round_trip"]),
-  totalFare: z.number(),
-  status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
-  createdAt: z.string(),
+export const bookings = pgTable("bookings", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  carId: varchar("car_id", { length: 36 }).notNull(),
+  customerId: varchar("customer_id", { length: 36 }).notNull(),
+  customerName: varchar("customer_name", { length: 100 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 15 }).notNull(),
+  pickupLocation: varchar("pickup_location", { length: 200 }),
+  dropLocation: varchar("drop_location", { length: 200 }),
+  seatsBooked: integer("seats_booked").notNull(),
+  tripType: varchar("trip_type", { length: 20 }).notNull(),
+  totalFare: integer("total_fare").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("confirmed"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertBookingSchema = z.object({
+export const insertBookingSchema = createInsertSchema(bookings).omit({ id: true, createdAt: true, status: true, totalFare: true }).extend({
   carId: z.string(),
   customerId: z.string().optional(),
   customerName: z.string().min(2, "Customer name must be at least 2 characters"),
@@ -119,21 +118,32 @@ export const insertBookingSchema = z.object({
 });
 
 export type InsertBooking = z.infer<typeof insertBookingSchema>;
-export type Booking = z.infer<typeof bookingSchema>;
+export type Booking = typeof bookings.$inferSelect;
 
-export const userSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  password: z.string(),
+export const users = pgTable("users", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  password: varchar("password", { length: 255 }).notNull(),
 });
 
-export const insertUserSchema = z.object({
+export const insertUserSchema = createInsertSchema(users).omit({ id: true }).extend({
   username: z.string().min(2),
   password: z.string().min(4),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = z.infer<typeof userSchema>;
+export type User = typeof users.$inferSelect;
+
+export const admins = pgTable("admins", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  username: varchar("username", { length: 100 }).notNull().unique(),
+  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAdminSchema = createInsertSchema(admins).omit({ id: true, createdAt: true });
+export type InsertAdmin = z.infer<typeof insertAdminSchema>;
+export type Admin = typeof admins.$inferSelect;
 
 export const loginSchema = z.object({
   mobile: z.string().min(10, "Mobile number must be at least 10 digits"),
@@ -142,4 +152,9 @@ export const loginSchema = z.object({
 export const otpVerifySchema = z.object({
   mobile: z.string().min(10),
   otp: z.string().length(6, "OTP must be 6 digits"),
+});
+
+export const adminLoginSchema = z.object({
+  username: z.string().min(2, "Username is required"),
+  password: z.string().min(4, "Password is required"),
 });

@@ -4,9 +4,13 @@ import {
   type Booking, type InsertBooking,
   type Customer, type InsertCustomer,
   type Driver, type InsertDriver,
-  type DriverVerificationStatus
+  type Admin, type InsertAdmin,
+  type DriverVerificationStatus,
+  customers, drivers, cars, bookings, users, admins
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface OtpRecord {
   mobile: string;
@@ -47,199 +51,190 @@ export interface IStorage {
   createBooking(booking: InsertBooking, totalFare: number): Promise<Booking>;
   updateBooking(id: string, booking: Partial<Booking>): Promise<Booking | undefined>;
   
+  getAdminByUsername(username: string): Promise<Admin | undefined>;
+  createAdmin(admin: InsertAdmin): Promise<Admin>;
+  
   createOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord>;
   getOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord | undefined>;
   verifyOtp(mobile: string, otp: string, userType: "customer" | "driver"): Promise<boolean>;
   clearOtp(mobile: string, userType: "customer" | "driver"): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private customers: Map<string, Customer>;
-  private drivers: Map<string, Driver>;
-  private cars: Map<string, Car>;
-  private bookings: Map<string, Booking>;
+export class DatabaseStorage implements IStorage {
   private otps: Map<string, OtpRecord>;
 
   constructor() {
-    this.users = new Map();
-    this.customers = new Map();
-    this.drivers = new Map();
-    this.cars = new Map();
-    this.bookings = new Map();
     this.otps = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values({ ...insertUser, id }).returning();
     return user;
   }
 
   async getCustomer(id: string): Promise<Customer | undefined> {
-    return this.customers.get(id);
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer || undefined;
   }
 
   async getCustomerByMobile(mobile: string): Promise<Customer | undefined> {
-    return Array.from(this.customers.values()).find(
-      (customer) => customer.mobile === mobile
-    );
+    const [customer] = await db.select().from(customers).where(eq(customers.mobile, mobile));
+    return customer || undefined;
   }
 
   async getCustomers(): Promise<Customer[]> {
-    return Array.from(this.customers.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return await db.select().from(customers).orderBy(desc(customers.createdAt));
   }
 
   async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
     const id = randomUUID();
-    const customer: Customer = {
-      ...insertCustomer,
-      id,
-      createdAt: new Date().toISOString(),
-    };
-    this.customers.set(id, customer);
+    const [customer] = await db.insert(customers).values({ 
+      ...insertCustomer, 
+      id 
+    }).returning();
     return customer;
   }
 
   async getDriver(id: string): Promise<Driver | undefined> {
-    return this.drivers.get(id);
+    const [driver] = await db.select().from(drivers).where(eq(drivers.id, id));
+    return driver || undefined;
   }
 
   async getDriverByMobile(mobile: string): Promise<Driver | undefined> {
-    return Array.from(this.drivers.values()).find(
-      (driver) => driver.mobile === mobile
-    );
+    const [driver] = await db.select().from(drivers).where(eq(drivers.mobile, mobile));
+    return driver || undefined;
   }
 
   async getDrivers(): Promise<Driver[]> {
-    return Array.from(this.drivers.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return await db.select().from(drivers).orderBy(desc(drivers.createdAt));
   }
 
   async getDriversByStatus(status: DriverVerificationStatus): Promise<Driver[]> {
-    return Array.from(this.drivers.values())
-      .filter((driver) => driver.verificationStatus === status)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await db.select().from(drivers)
+      .where(eq(drivers.verificationStatus, status))
+      .orderBy(desc(drivers.createdAt));
   }
 
   async createDriver(insertDriver: InsertDriver): Promise<Driver> {
     const id = randomUUID();
-    const driver: Driver = {
-      ...insertDriver,
+    const [driver] = await db.insert(drivers).values({ 
+      ...insertDriver, 
       id,
-      verificationStatus: "pending",
-      createdAt: new Date().toISOString(),
-    };
-    this.drivers.set(id, driver);
+      verificationStatus: "pending"
+    }).returning();
     return driver;
   }
 
   async updateDriver(id: string, updates: Partial<Driver>): Promise<Driver | undefined> {
-    const driver = this.drivers.get(id);
-    if (!driver) return undefined;
-    const updatedDriver = { ...driver, ...updates };
-    this.drivers.set(id, updatedDriver);
-    return updatedDriver;
+    const [driver] = await db.update(drivers)
+      .set(updates)
+      .where(eq(drivers.id, id))
+      .returning();
+    return driver || undefined;
   }
 
   async getCars(): Promise<Car[]> {
-    return Array.from(this.cars.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return await db.select().from(cars).orderBy(desc(cars.createdAt));
   }
 
   async getCar(id: string): Promise<Car | undefined> {
-    return this.cars.get(id);
+    const [car] = await db.select().from(cars).where(eq(cars.id, id));
+    return car || undefined;
   }
 
   async getCarsByDriverId(driverId: string): Promise<Car[]> {
-    return Array.from(this.cars.values())
-      .filter((car) => car.driverId === driverId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await db.select().from(cars)
+      .where(eq(cars.driverId, driverId))
+      .orderBy(desc(cars.createdAt));
   }
 
   async createCar(insertCar: InsertCar): Promise<Car> {
     const id = randomUUID();
-    const car: Car = {
+    const [car] = await db.insert(cars).values({
       ...insertCar,
       id,
       driverId: insertCar.driverId || "",
       waypoints: insertCar.waypoints || [],
-      status: "available",
-      createdAt: new Date().toISOString(),
-    };
-    this.cars.set(id, car);
+      status: "available"
+    }).returning();
     return car;
   }
 
   async updateCar(id: string, updates: Partial<Car>): Promise<Car | undefined> {
-    const car = this.cars.get(id);
-    if (!car) return undefined;
-    const updatedCar = { ...car, ...updates };
-    this.cars.set(id, updatedCar);
-    return updatedCar;
+    const [car] = await db.update(cars)
+      .set(updates)
+      .where(eq(cars.id, id))
+      .returning();
+    return car || undefined;
   }
 
   async deleteCar(id: string): Promise<boolean> {
-    return this.cars.delete(id);
+    const result = await db.delete(cars).where(eq(cars.id, id)).returning();
+    return result.length > 0;
   }
 
   async getBookings(): Promise<Booking[]> {
-    return Array.from(this.bookings.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return await db.select().from(bookings).orderBy(desc(bookings.createdAt));
   }
 
   async getBooking(id: string): Promise<Booking | undefined> {
-    return this.bookings.get(id);
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, id));
+    return booking || undefined;
   }
 
   async getBookingsByCarId(carId: string): Promise<Booking[]> {
-    return Array.from(this.bookings.values()).filter(
-      (booking) => booking.carId === carId
-    );
+    return await db.select().from(bookings).where(eq(bookings.carId, carId));
   }
 
   async getBookingsByCustomerId(customerId: string): Promise<Booking[]> {
-    return Array.from(this.bookings.values())
-      .filter((booking) => booking.customerId === customerId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return await db.select().from(bookings)
+      .where(eq(bookings.customerId, customerId))
+      .orderBy(desc(bookings.createdAt));
   }
 
   async createBooking(insertBooking: InsertBooking, totalFare: number): Promise<Booking> {
     const id = randomUUID();
-    const booking: Booking = {
+    const [booking] = await db.insert(bookings).values({
       ...insertBooking,
       id,
       customerId: insertBooking.customerId || "",
       totalFare,
-      status: "confirmed",
-      createdAt: new Date().toISOString(),
-    };
-    this.bookings.set(id, booking);
+      status: "confirmed"
+    }).returning();
     return booking;
   }
 
   async updateBooking(id: string, updates: Partial<Booking>): Promise<Booking | undefined> {
-    const booking = this.bookings.get(id);
-    if (!booking) return undefined;
-    const updatedBooking = { ...booking, ...updates };
-    this.bookings.set(id, updatedBooking);
-    return updatedBooking;
+    const [booking] = await db.update(bookings)
+      .set(updates)
+      .where(eq(bookings.id, id))
+      .returning();
+    return booking || undefined;
+  }
+
+  async getAdminByUsername(username: string): Promise<Admin | undefined> {
+    const [admin] = await db.select().from(admins).where(eq(admins.username, username));
+    return admin || undefined;
+  }
+
+  async createAdmin(insertAdmin: InsertAdmin): Promise<Admin> {
+    const id = randomUUID();
+    const [admin] = await db.insert(admins).values({
+      ...insertAdmin,
+      id
+    }).returning();
+    return admin;
   }
 
   private generateOtp(): string {
@@ -291,4 +286,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
