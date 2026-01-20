@@ -5,7 +5,7 @@ import { insertCarSchema, insertBookingSchema, insertCustomerSchema, insertDrive
 import { z } from "zod";
 import path from "path";
 import fs from "fs";
-import crypto from "crypto";
+import bcrypt from "bcrypt";
 
 declare module "express-session" {
   interface SessionData {
@@ -48,17 +48,24 @@ const verifyOtpSchema = z.object({
   userType: z.enum(["customer", "driver"]),
 });
 
-function hashPassword(password: string): string {
-  return crypto.createHash("sha256").update(password).digest("hex");
+const BCRYPT_SALT_ROUNDS = 12;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
+}
+
+async function comparePassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
 }
 
 async function initializeSampleData(): Promise<void> {
   try {
     const existingAdmin = await storage.getAdminByUsername("admin");
     if (!existingAdmin) {
+      const hashedPassword = await hashPassword("admin123");
       await storage.createAdmin({
         username: "admin",
-        passwordHash: hashPassword("admin123"),
+        passwordHash: hashedPassword,
       });
       console.log("[INIT] Default admin created (username: admin, password: admin123)");
     }
@@ -236,15 +243,22 @@ export async function registerRoutes(
       if (!admin) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
-      const passwordHash = hashPassword(password);
-      if (admin.passwordHash !== passwordHash) {
+      const passwordMatch = await comparePassword(password, admin.passwordHash);
+      if (!passwordMatch) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
-      req.session.adminId = admin.id;
-      req.session.userType = "admin";
-      res.json({ 
-        admin: { id: admin.id, username: admin.username }, 
-        message: "Admin login successful!" 
+      
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ error: "Login failed" });
+        }
+        req.session.adminId = admin.id;
+        req.session.userType = "admin";
+        res.json({ 
+          admin: { id: admin.id, username: admin.username }, 
+          message: "Admin login successful!" 
+        });
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

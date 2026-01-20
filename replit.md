@@ -39,7 +39,8 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 ├── server/
 │   ├── index.ts             # Express server entry
 │   ├── routes.ts            # API routes
-│   └── storage.ts           # In-memory data storage
+│   ├── storage.ts           # Database storage with PostgreSQL
+│   └── db.ts                # Drizzle ORM database connection
 ├── shared/
 │   └── schema.ts            # Zod schemas and types
 ├── tailwind.config.ts
@@ -75,6 +76,11 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - `GET /api/drivers` - List all drivers (admin)
 - `PATCH /api/drivers/:id/verify` - Approve/reject driver (admin)
 
+**Admin Auth:**
+- `POST /api/auth/admin/login` - Admin login with username/password
+- `POST /api/auth/admin/logout` - Admin logout
+- `GET /api/auth/admin/me` - Get current admin session
+
 ### Page Routes
 - `/` - Home page with role selection
 - `/customer` - Browse available rides and book seats
@@ -102,7 +108,7 @@ A React-based vehicle hire/ride-sharing application supporting multiple vehicle 
 - **Currency**: Indian Rupees (₹) for all fares
 - Light/dark theme toggle with localStorage persistence
 - Responsive layout for web and mobile
-- In-memory data storage
+- PostgreSQL database for data persistence (Drizzle ORM)
 - Form validation with Zod
 - Real-time fare calculation
 - Search/filter rides by origin, destination, and landmarks
@@ -146,6 +152,17 @@ flutter run
 - Material 3 design
 
 ## Recent Changes (January 2026)
+- **PostgreSQL Database**: Migrated from in-memory storage to PostgreSQL with Drizzle ORM
+  - Tables: customers, drivers, cars, bookings, admins
+  - DatabaseStorage class with full CRUD operations
+- **Admin Authentication System**: Password-protected admin panel
+  - Session-based login with username/password
+  - Default credentials: admin / admin123
+  - Admin dashboard with vehicle/booking/driver management
+- **Sample Demo Data**: Pre-populated data for testing
+  - 5 approved Indian drivers (Rajesh Kumar, Sunil Das, Amit Sharma, Bikash Ghosh, Pradeep Mukherjee)
+  - 8 vehicles across all types with West Bengal routes (₹150 - ₹4500 fares)
+  - Routes: Kolkata-Siliguri, Howrah-Darjeeling, Sealdah-Digha, Salt Lake-Shantiniketan, etc.
 - **OTP Authentication System**: 6-digit OTP with 5-minute expiry for enhanced security
   - 3-step flow: mobile entry → OTP verification → login/register
   - Development mode displays OTP in UI for testing
