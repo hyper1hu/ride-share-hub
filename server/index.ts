@@ -39,13 +39,24 @@ const httpServer = createServer(app);
 (async () => {
   await registerRoutes(httpServer, app);
 
-  // Health check endpoint
+  // Health check endpoints
   app.get('/health', (req, res) => {
     res.json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
       service: 'RideShare API',
       version: '2.0.0'
+    });
+  });
+
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      service: 'RideShare API',
+      version: '2.0.0',
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
     });
   });
 
