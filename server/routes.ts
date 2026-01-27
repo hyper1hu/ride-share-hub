@@ -6,6 +6,7 @@ import { z } from "zod";
 import path from "path";
 import fs from "fs";
 import bcrypt from "bcrypt";
+import { sendOtpViaSms } from "./firebase";
 
 declare module "express-session" {
   interface SessionData {
@@ -323,6 +324,13 @@ export async function registerRoutes(
 
       // Create OTP
       const otpRecord = await storage.createOtp(mobile, userType);
+      
+      // Send OTP via Firebase/SMS (or log in development)
+      const smsSent = await sendOtpViaSms(mobile, otpRecord.otp);
+      
+      if (!smsSent) {
+        console.warn(`[OTP] Failed to send SMS to ${mobile}, but OTP is available for verification`);
+      }
       
       // Log success
       await storage.createAuditLog({
