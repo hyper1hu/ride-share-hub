@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { Car, Users, ArrowRight, MapPin, Clock, Shield, Star, Banknote, Route, Phone, CheckCircle2, TrendingUp, Zap, Bus, Bike, Download, LayoutDashboard } from "lucide-react";
+import { Car, Users, ArrowRight, MapPin, Clock, Shield, Star, Banknote, Route, Phone, CheckCircle2, TrendingUp, Zap, Bus, Bike, Download, LayoutDashboard, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
+import { DriverLoginSheet } from "@/components/driver-login-sheet";
 
 const stats = [
   { value: "400+", label: "Locations", icon: MapPin },
@@ -50,6 +52,8 @@ const popularRoutes = [
 ];
 
 export default function Home() {
+  const [driverLoginOpen, setDriverLoginOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-50 shadow-sm">
@@ -64,9 +68,16 @@ export default function Home() {
             <Link href="/customer">
               <Button variant="ghost" size="sm" data-testid="nav-customer">Find Rides</Button>
             </Link>
-            <Link href="/driver">
-              <Button variant="ghost" size="sm" data-testid="nav-driver">For Drivers</Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-1.5"
+              onClick={() => setDriverLoginOpen(true)}
+              data-testid="nav-driver"
+            >
+              <LogIn className="h-4 w-4" />
+              <span className="hidden sm:inline">Driver Login</span>
+            </Button>
             <Link href="/admin">
               <Button variant="ghost" size="sm" className="gap-1.5" data-testid="nav-admin">
                 <LayoutDashboard className="h-4 w-4" />
@@ -77,6 +88,8 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <DriverLoginSheet open={driverLoginOpen} onOpenChange={setDriverLoginOpen} />
 
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5" />
@@ -105,12 +118,16 @@ export default function Home() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/driver">
-                  <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto shadow-md hover-elevate" data-testid="link-driver">
-                    <Car className="h-5 w-5" />
-                    Register as Driver
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="gap-2 w-full sm:w-auto shadow-md hover-elevate" 
+                  onClick={() => setDriverLoginOpen(true)}
+                  data-testid="link-driver"
+                >
+                  <Car className="h-5 w-5" />
+                  Register as Driver
+                </Button>
               </div>
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
@@ -385,12 +402,15 @@ export default function Home() {
                       <span>Manage bookings easily</span>
                     </li>
                   </ul>
-                  <Link href="/driver">
-                    <Button variant="outline" className="gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950" data-testid="link-driver-section">
-                      Start Earning
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950" 
+                    onClick={() => setDriverLoginOpen(true)}
+                    data-testid="link-driver-section"
+                  >
+                    Start Earning
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
