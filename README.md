@@ -37,9 +37,9 @@ A comprehensive ride-sharing platform built with modern web technologies, featur
 ### Backend
 - **Node.js 22** with Express 5
 - **TypeScript** for type safety
-- **PostgreSQL** database
-- **Drizzle ORM** for database operations
-- **Express Session** for authentication
+- **Firebase Firestore** database (FREE - NoSQL)
+- **Firebase Authentication** for OTP (FREE)
+- **Express Session** for session management
 
 ### Mobile
 - **Flutter** for iOS & Android
@@ -50,7 +50,7 @@ A comprehensive ride-sharing platform built with modern web technologies, featur
 
 ### Prerequisites
 - Node.js 22 or higher
-- PostgreSQL 14 or higher
+- Firebase account (FREE - no credit card required)
 - npm or yarn
 
 ### Setup
@@ -66,29 +66,46 @@ cd ride-share-hub
 npm install
 ```
 
-3. **Configure environment**
+3. **Configure Firebase** (5 minutes)
+
+See detailed setup guide: [FIREBASE_COMPLETE_SETUP.md](./FIREBASE_COMPLETE_SETUP.md)
+
+Quick setup:
+- Create Firebase project at https://console.firebase.google.com
+- Enable Firestore Database
+- Get service account key
+- Add to `.env` file
+
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your database URL:
+Edit `.env` and add your Firebase credentials:
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/rideshare
+FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+FIREBASE_PROJECT_ID=your-project-id
 SESSION_SECRET=your-secret-key-here
 ```
 
-4. **Initialize database**
-```bash
-npm run db:push
-npm run db:seed
-```
+**Note:** For development, Firebase works without credentials!
 
-5. **Start development server**
+4. **Build and start**
 ```bash
+# Build the application
+npm run build
+
+# Start production server
+npm start
+
+# Or for development
 npm run dev
 ```
 
 The application will be available at `http://localhost:5000`
+
+**Default admin credentials:**
+- Username: `admin`
+- Password: `admin123`
 
 ## 🚀 Deployment
 
