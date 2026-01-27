@@ -1,248 +1,334 @@
-# Ride Share Hub
+# 🚗 RideShare Hub
 
-A full-stack ride-sharing platform for West Bengal with web and mobile applications.
+A comprehensive ride-sharing platform built with modern web technologies, featuring customer booking, driver management, and admin controls.
 
-## Tech Stack
+## 🌟 Features
 
-- **Backend**: Node.js, Express, TypeScript, PostgreSQL, Drizzle ORM
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Radix UI
-- **Mobile**: Flutter (iOS & Android)
+### For Customers
+- 🔍 Search rides by origin and destination
+- 📱 OTP-based authentication
+- 🚗 View available vehicles with pricing
+- 📅 Book rides instantly
+- 📊 Track booking history
 
-## Prerequisites
+### For Drivers
+- 🚙 Register and manage vehicles
+- ✅ Driver verification system
+- 📋 View and manage bookings
+- 💰 Earnings tracking
+- 📱 Mobile app support (Flutter)
 
-### For Web App (Backend + Frontend)
-1. **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
-2. **PostgreSQL** (v14 or higher) - [Download](https://www.postgresql.org/download/)
-3. **Git** - [Download](https://git-scm.com/)
+### For Admins
+- 👥 User management
+- ✅ Driver verification and approval
+- 🚗 Vehicle management
+- 📊 Analytics and reporting
+- 🔒 Security controls
 
-### For Mobile App
-4. **Flutter SDK** (v3.0 or higher) - [Install Guide](https://flutter.dev/docs/get-started/install)
-5. **Android Studio** (for Android) - [Download](https://developer.android.com/studio)
-6. **Xcode** (for iOS, Mac only) - Available on App Store
+## 🛠️ Tech Stack
 
-## Setup Instructions
+### Frontend
+- **React 18** with TypeScript
+- **Tailwind CSS** for styling
+- **Wouter** for routing
+- **Shadcn/ui** components
+- **Lucide React** icons
 
-### 1. Install Dependencies
+### Backend
+- **Node.js 22** with Express 5
+- **TypeScript** for type safety
+- **PostgreSQL** database
+- **Drizzle ORM** for database operations
+- **Express Session** for authentication
 
+### Mobile
+- **Flutter** for iOS & Android
+- Cross-platform support
+- Native performance
+
+## 📦 Installation
+
+### Prerequisites
+- Node.js 22 or higher
+- PostgreSQL 14 or higher
+- npm or yarn
+
+### Setup
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/hyper1hu/ride-share-hub.git
+cd ride-share-hub
+```
+
+2. **Install dependencies**
 ```bash
 npm install
 ```
 
-### 2. Setup PostgreSQL Database
-
-#### Option A: Local PostgreSQL
-1. Install PostgreSQL
-2. Create a database:
-```sql
-CREATE DATABASE rideshare;
-```
-
-#### Option B: Cloud PostgreSQL (Free)
-- **Neon**: https://neon.tech/
-- **Supabase**: https://supabase.com/
-- **ElephantSQL**: https://www.elephantsql.com/
-
-### 3. Configure Environment Variables
-
-The `.env` file has been created. Update it with your database credentials:
-
-```env
-DATABASE_URL=postgresql://username:password@host:5432/rideshare
-SESSION_SECRET=your-secret-key-here
-NODE_ENV=development
-```
-
-### 4. Setup Database Schema
-
+3. **Configure environment**
 ```bash
-# Generate migration files
-npm run db:generate
-
-# Push schema to database
-npm run db:push
+cp .env.example .env
 ```
 
-### 5. Run the Web App
+Edit `.env` and add your database URL:
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/rideshare
+SESSION_SECRET=your-secret-key-here
+```
 
+4. **Initialize database**
+```bash
+npm run db:push
+npm run db:seed
+```
+
+5. **Start development server**
 ```bash
 npm run dev
 ```
 
-The app will be available at: http://localhost:5000
+The application will be available at `http://localhost:5000`
 
-**Default Admin Credentials:**
-- Username: `admin`
-- Password: `admin123`
+## 🚀 Deployment
 
-## Project Structure
+### Option 1: Render.com (Free Tier)
 
+1. Create account on [Render.com](https://render.com)
+2. Create PostgreSQL database
+3. Create Web Service from GitHub repository
+4. Add environment variables:
+   - `DATABASE_URL` (from Render PostgreSQL)
+   - `SESSION_SECRET` (generate random string)
+5. Deploy automatically
+
+### Option 2: Railway.app
+
+1. Create account on [Railway.app](https://railway.app)
+2. Create new project from GitHub
+3. Add PostgreSQL plugin
+4. Configure environment variables
+5. Deploy with one click
+
+### Option 3: Docker
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Initialize database
+docker-compose exec app npm run db:push
+docker-compose exec app npm run db:seed
 ```
-├── client/              # React frontend
-│   └── src/
-│       ├── pages/       # Route pages
-│       ├── components/  # UI components
-│       └── lib/         # Utilities
-├── server/              # Express backend
-│   ├── index.ts         # Server entry
-│   ├── routes.ts        # API routes
-│   ├── db.ts           # Database connection
-│   └── storage.ts      # Data access layer
-├── shared/              # Shared types & schemas
-│   └── schema.ts       # Database schema
-├── flutter_rideshare/   # Flutter mobile app
-└── script/             # Build scripts
-```
 
-## Running the Mobile App
+Access at `http://localhost:5000`
 
-### Setup
+## 📱 Mobile App Setup
+
+### Flutter App
+
+1. **Navigate to Flutter directory**
 ```bash
 cd flutter_rideshare
+```
+
+2. **Install dependencies**
+```bash
 flutter pub get
 ```
 
-### Configure API URL
-
-Edit `lib/main.dart` and update the API URL:
-- **Android Emulator**: `http://10.0.2.2:5000`
-- **iOS Simulator**: `http://localhost:5000`
-- **Physical Device**: `http://YOUR_COMPUTER_IP:5000`
-
-### Run
-```bash
-# List available devices
-flutter devices
-
-# Run on connected device/emulator
-flutter run
+3. **Configure API endpoint**
+Edit `lib/config/api_config.dart`:
+```dart
+static const String baseUrl = 'https://your-api-url.com';
 ```
 
-### Build
+4. **Run on device**
 ```bash
-# Android APK
-flutter build apk
+# iOS
+flutter run -d ios
 
-# Android App Bundle (for Play Store)
-flutter build appbundle
-
-# iOS (Mac only)
-flutter build ios
+# Android
+flutter run -d android
 ```
 
-## Features
+5. **Build APK**
+```bash
+flutter build apk --release
+```
 
-### Customer Portal
-- Browse available rides by route
-- Search with 441+ West Bengal locations
-- Book rides with OTP authentication
-- View booking history
+## 🗂️ Project Structure
 
-### Driver Portal
-- Register with Aadhaar & License verification
-- List vehicles (8 types supported)
-- Manage routes and pricing
-- Track bookings
+```
+ride-share-hub/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components
+│   │   ├── lib/           # Utilities and auth
+│   │   └── hooks/         # Custom React hooks
+│   └── index.html
+├── server/                # Express backend
+│   ├── index.ts          # Server entry point
+│   ├── routes.ts         # API routes
+│   ├── db.ts             # Database connection
+│   └── storage.ts        # Data access layer
+├── shared/               # Shared code
+│   └── schema.ts         # Database schema & types
+├── flutter_rideshare/    # Flutter mobile app
+│   ├── lib/
+│   │   ├── screens/      # App screens
+│   │   ├── models/       # Data models
+│   │   └── services/     # API services
+│   └── pubspec.yaml
+├── script/               # Deployment scripts
+│   ├── deploy.sh         # Deployment script
+│   └── setup-db.sh       # Database setup
+└── docker-compose.yml    # Docker configuration
+```
 
-### Admin Portal
-- Verify driver documents
-- Manage vehicles and bookings
-- View platform statistics
-- Monitor revenue
+## 🔧 Available Scripts
 
-### Mobile App
-- Cross-platform iOS & Android
-- GPS location services
-- Offline location search
-- Dark/Light theme
+### Development
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+```
 
-## Vehicle Types Supported
+### Database
+```bash
+npm run db:push      # Push schema to database
+npm run db:seed      # Seed database with sample data
+npm run db:studio    # Open Drizzle Studio
+```
 
-1. Car
-2. SUV
-3. Van
-4. Bus
-5. Minibus
-6. Motorcycle
-7. Auto Rickshaw
-8. Truck
+### Testing
+```bash
+npm test             # Run tests
+npm run lint         # Lint code
+```
 
-## API Endpoints
+## 🔐 Security Features
+
+- ✅ **Password Hashing** - Bcrypt for secure password storage
+- ✅ **Rate Limiting** - 100 requests per 15 minutes
+- ✅ **Input Validation** - Zod schema validation
+- ✅ **SQL Injection Prevention** - Parameterized queries
+- ✅ **Session Management** - Secure session handling
+- ✅ **Aadhaar Masking** - PII protection
+- ✅ **Account Locking** - After failed login attempts
+
+## 📊 Database Schema
+
+### Tables
+- **users** - User accounts (customers, drivers, admins)
+- **drivers** - Driver profiles and verification
+- **vehicles** - Vehicle information
+- **bookings** - Ride bookings
+- **locations** - 400+ West Bengal locations
+- **vehicle_types** - 8 vehicle categories
+- **audit_logs** - Security audit trail
+- **rate_limits** - API rate limiting
+- **failed_logins** - Login attempt tracking
+
+## 🌍 API Endpoints
 
 ### Authentication
-- `POST /api/auth/customer/register` - Customer registration
-- `POST /api/auth/customer/login` - Customer login
-- `POST /api/auth/driver/register` - Driver registration
-- `POST /api/auth/driver/login` - Driver login
-- `POST /api/auth/admin/login` - Admin login
-- `POST /api/auth/otp/send` - Send OTP
-- `POST /api/auth/otp/verify` - Verify OTP
+- `POST /api/auth/send-otp` - Send OTP
+- `POST /api/auth/verify-otp` - Verify OTP
+- `POST /api/auth/logout` - Logout
+- `GET /api/auth/me` - Get current user
 
 ### Vehicles
 - `GET /api/cars` - List all vehicles
-- `GET /api/cars/search?origin=X&destination=Y` - Search vehicles
-- `POST /api/cars` - Create vehicle listing
+- `GET /api/cars/search` - Search vehicles
+- `POST /api/cars` - Add vehicle (driver only)
 - `PATCH /api/cars/:id` - Update vehicle
 - `DELETE /api/cars/:id` - Delete vehicle
 
 ### Bookings
-- `GET /api/bookings` - List all bookings
-- `GET /api/bookings/my` - Customer's bookings
+- `GET /api/bookings` - List bookings
 - `POST /api/bookings` - Create booking
-- `PATCH /api/bookings/:id` - Update booking
+- `PATCH /api/bookings/:id` - Update booking status
 
 ### Admin
-- `GET /api/drivers` - List drivers
-- `PATCH /api/drivers/:id/verify` - Verify driver
-- `GET /api/stats` - Platform statistics
+- `GET /api/admin/drivers` - List drivers
+- `PATCH /api/admin/drivers/:id/verify` - Verify driver
+- `GET /api/admin/users` - List users
+- `GET /api/admin/audit-logs` - View audit logs
 
-## Troubleshooting
+### Locations
+- `GET /api/locations` - List all locations
+- `GET /api/locations/search` - Search locations
 
-### Database Connection Error
-- Verify PostgreSQL is running
-- Check DATABASE_URL in `.env`
-- Ensure database exists
+## 🎨 UI Components
 
-### Port Already in Use
-Change port in `server/index.ts`:
-```typescript
-const port = 5000; // Change to available port
+Built with **Shadcn/ui** components:
+- Button, Input, Card, Dialog
+- Select, Tabs, Badge, Avatar
+- Table, Alert, Toast
+- Custom components for booking, vehicle management
+
+## 📝 Environment Variables
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Session
+SESSION_SECRET=your-secret-key-minimum-32-characters
+
+# Optional
+NODE_ENV=production
+PORT=5000
 ```
 
-### Flutter Build Issues
-```bash
-flutter clean
-flutter pub get
-flutter doctor -v
-```
+## 🤝 Contributing
 
-## Development
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
-### Database Changes
-After modifying `shared/schema.ts`:
-```bash
-npm run db:generate
-npm run db:push
-```
+## 📄 License
 
-### View Database
-```bash
-npm run db:studio
-```
+This project is licensed under the MIT License.
 
-## Production Build
+## 🐛 Bug Reports
 
-```bash
-# Build frontend and backend
-npm run build
+Found a bug? Please open an issue on GitHub with:
+- Description of the bug
+- Steps to reproduce
+- Expected behavior
+- Screenshots (if applicable)
 
-# Start production server
-node dist/index.cjs
-```
+## 📞 Support
 
-## License
+For support and questions:
+- Open an issue on GitHub
+- Check existing documentation
+- Review deployment guides
 
-ISC
+## 🎯 Roadmap
 
-## Support
+- [ ] Real-time ride tracking
+- [ ] Payment gateway integration
+- [ ] Push notifications
+- [ ] Driver ratings and reviews
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
 
-For issues or questions, please create an issue in the repository.
+## 🙏 Acknowledgments
+
+- Built with modern web technologies
+- UI components from Shadcn/ui
+- Icons from Lucide React
+- Database ORM by Drizzle
+
+---
+
+**Made with ❤️ for the ride-sharing community**
+
+**Repository:** https://github.com/hyper1hu/ride-share-hub
