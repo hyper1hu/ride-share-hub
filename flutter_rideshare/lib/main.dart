@@ -11,8 +11,13 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ApiService.setBaseUrl('http://10.0.2.2:5000');
+  
+  // Initialize API service with configuration
+  ApiService.initialize();
+  
+  // Initialize notification service
   await NotificationService().initialize();
+  
   runApp(const RideShareApp());
 }
 

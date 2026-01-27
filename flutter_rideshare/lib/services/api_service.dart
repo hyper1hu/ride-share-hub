@@ -4,6 +4,7 @@ import '../models/car.dart';
 import '../models/booking.dart';
 import '../models/customer.dart';
 import '../models/driver.dart';
+import '../config/api_config.dart';
 
 class OtpResult {
   final bool success;
@@ -15,10 +16,16 @@ class OtpResult {
 }
 
 class ApiService {
-  static String baseUrl = 'http://localhost:5000';
+  static String baseUrl = ApiConfig.baseUrl;
   
   static void setBaseUrl(String url) {
     baseUrl = url;
+    print('API Base URL set to: $baseUrl');
+  }
+
+  // Initialize with default config
+  static void initialize() {
+    ApiConfig.printConfig();
   }
 
   static Future<OtpResult> sendOtp(String mobile, String userType) async {

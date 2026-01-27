@@ -904,5 +904,68 @@ export async function registerRoutes(
     }
   });
 
+  // Location search endpoints
+  app.get("/api/locations/search", async (req, res) => {
+    try {
+      const { searchLocations } = await import("./data/indian-locations");
+      const query = req.query.q as string || "";
+      const limit = parseInt(req.query.limit as string) || 20;
+      const results = searchLocations(query, limit);
+      res.json(results);
+    } catch (error) {
+      console.error("Location search error:", error);
+      res.status(500).json({ error: "Failed to search locations" });
+    }
+  });
+
+  app.get("/api/locations/popular", async (req, res) => {
+    try {
+      const { getPopularLocations } = await import("./data/indian-locations");
+      const limit = parseInt(req.query.limit as string) || 50;
+      const results = getPopularLocations(limit);
+      res.json(results);
+    } catch (error) {
+      console.error("Popular locations error:", error);
+      res.status(500).json({ error: "Failed to fetch popular locations" });
+    }
+  });
+
+  app.get("/api/locations/state/:state", async (req, res) => {
+    try {
+      const { getLocationsByState } = await import("./data/indian-locations");
+      const state = req.params.state;
+      const results = getLocationsByState(state);
+      res.json(results);
+    } catch (error) {
+      console.error("State locations error:", error);
+      res.status(500).json({ error: "Failed to fetch state locations" });
+    }
+  });
+
+  app.get("/api/locations/all", async (req, res) => {
+    try {
+      const { indianLocations } = await import("./data/indian-locations");
+      res.json(indianLocations);
+    } catch (error) {
+      console.error("All locations error:", error);
+      res.status(500).json({ error: "Failed to fetch all locations" });
+    }
+  });
+
+  // Vehicle types endpoint
+  app.get("/api/vehicle-types", async (req, res) => {
+    try {
+      const { vehicleTypes, vehicleTypeLabels } = await import("@shared/schema");
+      const types = vehicleTypes.map(type => ({
+        value: type,
+        label: vehicleTypeLabels[type]
+      }));
+      res.json(types);
+    } catch (error) {
+      console.error("Vehicle types error:", error);
+      res.status(500).json({ error: "Failed to fetch vehicle types" });
+    }
+  });
+
   return httpServer;
 }

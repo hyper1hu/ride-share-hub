@@ -2,8 +2,62 @@ import { pgTable, text, integer, timestamp, varchar, serial } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const vehicleTypes = ["car", "suv", "van", "bus", "minibus", "motorcycle", "auto_rickshaw", "truck"] as const;
+// Comprehensive vehicle types for all India
+export const vehicleTypes = [
+  "sedan", 
+  "hatchback",
+  "suv", 
+  "muv",
+  "luxury_sedan",
+  "van", 
+  "mini_van",
+  "bus", 
+  "minibus",
+  "sleeper_bus",
+  "ac_bus",
+  "non_ac_bus",
+  "motorcycle", 
+  "scooter",
+  "auto_rickshaw", 
+  "tempo",
+  "mini_truck",
+  "truck",
+  "heavy_truck",
+  "container_truck",
+  "pickup_truck",
+  "tata_ace",
+  "ambulance",
+  "school_bus"
+] as const;
 export type VehicleType = typeof vehicleTypes[number];
+
+// Vehicle type display names
+export const vehicleTypeLabels: Record<VehicleType, string> = {
+  sedan: "Sedan",
+  hatchback: "Hatchback",
+  suv: "SUV",
+  muv: "MUV",
+  luxury_sedan: "Luxury Sedan",
+  van: "Van",
+  mini_van: "Mini Van",
+  bus: "Bus",
+  minibus: "Mini Bus",
+  sleeper_bus: "Sleeper Bus",
+  ac_bus: "AC Bus",
+  non_ac_bus: "Non-AC Bus",
+  motorcycle: "Motorcycle",
+  scooter: "Scooter",
+  auto_rickshaw: "Auto Rickshaw",
+  tempo: "Tempo",
+  mini_truck: "Mini Truck",
+  truck: "Truck",
+  heavy_truck: "Heavy Truck",
+  container_truck: "Container Truck",
+  pickup_truck: "Pickup Truck",
+  tata_ace: "Tata Ace",
+  ambulance: "Ambulance",
+  school_bus: "School Bus"
+};
 
 export const driverVerificationStatus = ["pending", "approved", "rejected"] as const;
 export type DriverVerificationStatus = typeof driverVerificationStatus[number];
