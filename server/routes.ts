@@ -292,8 +292,50 @@ export async function registerRoutes(
   app.post("/api/auth/otp/send", async (req, res) => {
     try {
       const { mobile, userType } = otpSchema.parse(req.body);
+      const ipAddress = (Array.isArray(req.ip) ? req.ip[0] : req.ip) || req.socket.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+
+      // Check rate limit for OTP sending (max 3 per 15 minutes per mobile)
+      const rateCheck = await storage.checkRateLimit(mobile, "otp_send", 3, 15);
+      if (!rateCheck.allowed) {
+        await storage.createAuditLog({
+          mobile,
+          userType,
+          action: "otp_send_blocked",
+          ipAddress,
+          userAgent,
+          success: 0,
+          errorMessage: rateCheck.lockedUntil 
+            ? `Rate limit exceeded. Locked until ${rateCheck.lockedUntil.toISOString()}`
+            : "Too many OTP requests",
+        });
+
+        return res.status(429).json({ 
+          error: rateCheck.lockedUntil 
+            ? `Too many attempts. Please try again after ${rateCheck.lockedUntil.toLocaleTimeString()}`
+            : "Too many OTP requests. Please wait before trying again.",
+          lockedUntil: rateCheck.lockedUntil,
+        });
+      }
+
+      // Record attempt
+      await storage.recordAttempt(mobile, "otp_send");
+
+      // Create OTP
       const otpRecord = await storage.createOtp(mobile, userType);
+      
+      // Log success
+      await storage.createAuditLog({
+        mobile,
+        userType,
+        action: "otp_sent",
+        ipAddress,
+        userAgent,
+        success: 1,
+      });
+
       console.log(`[OTP] ${userType} ${mobile}: ${otpRecord.otp}`);
+      
       res.json({ 
         success: true, 
         message: "OTP sent successfully",
@@ -304,6 +346,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
+      console.error("[OTP] Send error:", error);
       res.status(500).json({ error: "Failed to send OTP" });
     }
   });
@@ -311,15 +354,90 @@ export async function registerRoutes(
   app.post("/api/auth/otp/verify", async (req, res) => {
     try {
       const { mobile, otp, userType } = verifyOtpSchema.parse(req.body);
-      const verified = await storage.verifyOtp(mobile, otp, userType);
-      if (!verified) {
-        return res.status(400).json({ error: "Invalid or expired OTP" });
+      const ipAddress = (Array.isArray(req.ip) ? req.ip[0] : req.ip) || req.socket.remoteAddress || "unknown";
+      const userAgent = req.get("user-agent") || "unknown";
+
+      // Check rate limit for OTP verification (max 5 attempts per 30 minutes)
+      const rateCheck = await storage.checkRateLimit(mobile, "otp_verify", 5, 30);
+      if (!rateCheck.allowed) {
+        await storage.createAuditLog({
+          mobile,
+          userType,
+          action: "otp_verify_blocked",
+          ipAddress,
+          userAgent,
+          success: 0,
+          errorMessage: rateCheck.lockedUntil 
+            ? `Too many failed attempts. Locked until ${rateCheck.lockedUntil.toISOString()}`
+            : "Too many verification attempts",
+        });
+
+        return res.status(429).json({ 
+          error: rateCheck.lockedUntil 
+            ? `Account temporarily locked. Please try again after ${rateCheck.lockedUntil.toLocaleTimeString()}`
+            : "Too many failed attempts. Please wait before trying again.",
+          lockedUntil: rateCheck.lockedUntil,
+        });
       }
+
+      // Get OTP record to check attempts
+      const otpRecord = await storage.getOtp(mobile, userType);
+      if (otpRecord && otpRecord.attempts >= 5) {
+        await storage.lockIdentifier(mobile, "otp_verify", 30);
+        await storage.createAuditLog({
+          mobile,
+          userType,
+          action: "otp_verify_locked",
+          ipAddress,
+          userAgent,
+          success: 0,
+          errorMessage: "Too many failed OTP attempts",
+        });
+
+        return res.status(429).json({ 
+          error: "Too many failed attempts. Your account has been temporarily locked for 30 minutes.",
+        });
+      }
+
+      // Verify OTP
+      const verified = await storage.verifyOtp(mobile, otp, userType);
+      
+      if (!verified) {
+        // Record failed attempt
+        await storage.recordAttempt(mobile, "otp_verify");
+        await storage.createAuditLog({
+          mobile,
+          userType,
+          action: "otp_verify_failed",
+          ipAddress,
+          userAgent,
+          success: 0,
+          errorMessage: "Invalid OTP provided",
+        });
+
+        const remainingAttempts = otpRecord ? Math.max(0, 5 - (otpRecord.attempts + 1)) : 4;
+        return res.status(400).json({ 
+          error: `Invalid or expired OTP. ${remainingAttempts} attempts remaining.`,
+          remainingAttempts,
+        });
+      }
+
+      // Log success
+      await storage.createAuditLog({
+        mobile,
+        userType,
+        action: "otp_verified",
+        ipAddress,
+        userAgent,
+        success: 1,
+      });
+
       res.json({ success: true, message: "OTP verified successfully" });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
       }
+      console.error("[OTP] Verify error:", error);
       res.status(500).json({ error: "Failed to verify OTP" });
     }
   });
@@ -492,7 +610,8 @@ export async function registerRoutes(
 
   app.get("/api/drivers/:id", async (req, res) => {
     try {
-      const driver = await storage.getDriver(req.params.id);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const driver = await storage.getDriver(id);
       if (!driver) {
         return res.status(404).json({ error: "Driver not found" });
       }
@@ -504,11 +623,12 @@ export async function registerRoutes(
 
   app.patch("/api/drivers/:id/verify", requireAdminAuth, async (req, res) => {
     try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const { status, rejectionReason } = req.body;
       if (!["approved", "rejected"].includes(status)) {
         return res.status(400).json({ error: "Invalid status" });
       }
-      const driver = await storage.updateDriver(req.params.id, {
+      const driver = await storage.updateDriver(id, {
         verificationStatus: status,
         rejectionReason: status === "rejected" ? rejectionReason : undefined,
       });
@@ -584,7 +704,8 @@ export async function registerRoutes(
 
   app.get("/api/cars/:id", async (req, res) => {
     try {
-      const car = await storage.getCar(req.params.id);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const car = await storage.getCar(id);
       if (!car) {
         return res.status(404).json({ error: "Car not found" });
       }
@@ -625,7 +746,8 @@ export async function registerRoutes(
 
   app.patch("/api/cars/:id", async (req, res) => {
     try {
-      const car = await storage.updateCar(req.params.id, req.body);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const car = await storage.updateCar(id, req.body);
       if (!car) {
         return res.status(404).json({ error: "Car not found" });
       }
@@ -637,7 +759,8 @@ export async function registerRoutes(
 
   app.delete("/api/cars/:id", async (req, res) => {
     try {
-      const success = await storage.deleteCar(req.params.id);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const success = await storage.deleteCar(id);
       if (!success) {
         return res.status(404).json({ error: "Car not found" });
       }
@@ -667,7 +790,8 @@ export async function registerRoutes(
 
   app.get("/api/bookings/:id", async (req, res) => {
     try {
-      const booking = await storage.getBooking(req.params.id);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const booking = await storage.getBooking(id);
       if (!booking) {
         return res.status(404).json({ error: "Booking not found" });
       }
@@ -717,7 +841,8 @@ export async function registerRoutes(
 
   app.patch("/api/bookings/:id", async (req, res) => {
     try {
-      const booking = await storage.updateBooking(req.params.id, req.body);
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const booking = await storage.updateBooking(id, req.body);
       if (!booking) {
         return res.status(404).json({ error: "Booking not found" });
       }

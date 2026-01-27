@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { OtpInputEnhanced } from "@/components/otp-input-enhanced";
 
 const mobileSchema = z.object({
   mobile: z.string().length(10, "Mobile number must be exactly 10 digits").regex(/^\d+$/, "Only digits allowed"),
@@ -38,6 +39,9 @@ export default function DriverRegister() {
   const [isLoading, setIsLoading] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [displayOtp, setDisplayOtp] = useState<string | null>(null);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<Date | undefined>();
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState<number | undefined>();
   const { toast } = useToast();
   const { driver, isDriverLoggedIn, loginDriver, registerDriver, logout, sendOtp, verifyOtp } = useAuth();
 
@@ -58,6 +62,7 @@ export default function DriverRegister() {
 
   const handleSendOtp = async (data: z.infer<typeof mobileSchema>) => {
     setIsLoading(true);
+    setOtpError(null);
     const result = await sendOtp(data.mobile, "driver");
     setIsLoading(false);
     
@@ -67,6 +72,9 @@ export default function DriverRegister() {
       if (result.otp) {
         setDisplayOtp(result.otp);
       }
+      if (result.expiresAt) {
+        setOtpExpiresAt(new Date(result.expiresAt));
+      }
       setStep("otp");
       toast({ title: "OTP Sent", description: "Please check your mobile for the 6-digit code." });
     } else {
@@ -74,9 +82,10 @@ export default function DriverRegister() {
     }
   };
 
-  const handleVerifyOtp = async (data: z.infer<typeof otpSchema>) => {
+  const handleVerifyOtp = async (otpValue: string) => {
     setIsLoading(true);
-    const result = await verifyOtp(mobileNumber, data.otp, "driver");
+    setOtpError(null);
+    const result = await verifyOtp(mobileNumber, otpValue, "driver");
     
     if (result.success) {
       setDisplayOtp(null);
@@ -89,11 +98,15 @@ export default function DriverRegister() {
         setStep("register");
         toast({ title: "New driver", description: "Please complete your registration." });
       } else {
+        setOtpError(loginResult.error || "Login failed");
         toast({ title: "Login failed", description: loginResult.error, variant: "destructive" });
       }
     } else {
       setIsLoading(false);
-      toast({ title: "Invalid OTP", description: result.error, variant: "destructive" });
+      setOtpError(result.error || "Invalid OTP");
+      if (result.remainingAttempts !== undefined) {
+        setRemainingAttempts(result.remainingAttempts);
+      }
     }
   };
 
@@ -119,6 +132,7 @@ export default function DriverRegister() {
 
   const handleResendOtp = async () => {
     setIsLoading(true);
+    setOtpError(null);
     const result = await sendOtp(mobileNumber, "driver");
     setIsLoading(false);
     
@@ -126,8 +140,13 @@ export default function DriverRegister() {
       if (result.otp) {
         setDisplayOtp(result.otp);
       }
+      if (result.expiresAt) {
+        setOtpExpiresAt(new Date(result.expiresAt));
+      }
+      setRemainingAttempts(undefined);
       toast({ title: "OTP Resent", description: "A new code has been sent to your mobile." });
     } else {
+      setOtpError(result.error || "Failed to resend OTP");
       toast({ title: "Failed to resend OTP", description: result.error, variant: "destructive" });
     }
   };
@@ -147,16 +166,16 @@ export default function DriverRegister() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <Link href="/">
-            <Button variant="ghost" size="icon" data-testid="button-back-home">
+            <Button variant="ghost" size="icon" className="hover-elevate" data-testid="button-back-home">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Car className="h-5 w-5 text-primary" />
+            <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center shadow-lg">
+              <Car className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="font-semibold text-lg leading-tight">Driver Portal</h1>
@@ -169,11 +188,11 @@ export default function DriverRegister() {
 
       <main className="container mx-auto px-4 py-8 max-w-xl">
         {isDriverLoggedIn && driver ? (
-          <div className="space-y-6">
-            <Card>
+          <div className="space-y-6 animate-fade-in">
+            <Card className="shadow-xl border-2">
               <CardHeader className="text-center pb-2">
-                <div className="mx-auto h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                  <User className="h-10 w-10 text-primary" />
+                <div className="mx-auto h-20 w-20 rounded-full gradient-primary flex items-center justify-center mb-4 shadow-lg animate-pulse-glow">
+                  <User className="h-10 w-10 text-white" />
                 </div>
                 <CardTitle className="text-2xl">{driver.name}</CardTitle>
                 <CardDescription className="flex items-center justify-center gap-2 mt-2">
@@ -186,8 +205,10 @@ export default function DriverRegister() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {driver.verificationStatus === "pending" && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-center">
-                    <Clock className="h-8 w-8 text-amber-500 mx-auto mb-2" />
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-center animate-slide-up">
+                    <div className="h-12 w-12 rounded-full gradient-warning flex items-center justify-center mx-auto mb-2 shadow-lg">
+                      <Clock className="h-6 w-6 text-white animate-pulse" />
+                    </div>
                     <h3 className="font-semibold text-amber-700 dark:text-amber-400">Verification Pending</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       Your documents are being reviewed by our admin team. You'll be able to list vehicles once approved.
@@ -206,13 +227,15 @@ export default function DriverRegister() {
                 )}
 
                 {driver.verificationStatus === "approved" && (
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center">
-                    <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center animate-bounce-in">
+                    <div className="h-12 w-12 rounded-full gradient-success flex items-center justify-center mx-auto mb-2 shadow-lg">
+                      <CheckCircle className="h-6 w-6 text-white checkmark-animate" />
+                    </div>
                     <h3 className="font-semibold text-green-700 dark:text-green-400">Verified Driver</h3>
                     <p className="text-sm text-muted-foreground mt-1">
                       You can now list your vehicles and accept ride requests.
                     </p>
-                    <Button className="mt-4" onClick={() => navigate("/driver")} data-testid="button-go-to-driver">
+                    <Button className="mt-4 gradient-success border-0 shadow-lg hover-elevate" onClick={() => navigate("/driver")} data-testid="button-go-to-driver">
                       <Car className="mr-2 h-4 w-4" />
                       Go to Driver Dashboard
                     </Button>
@@ -239,10 +262,10 @@ export default function DriverRegister() {
             </Card>
           </div>
         ) : step === "mobile" ? (
-          <Card>
+          <Card className="shadow-xl border-2 animate-fade-in">
             <CardHeader className="text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                <LogIn className="h-8 w-8 text-primary" />
+              <div className="mx-auto h-16 w-16 rounded-full gradient-primary flex items-center justify-center mb-4 shadow-lg">
+                <LogIn className="h-8 w-8 text-white" />
               </div>
               <CardTitle>Driver Login</CardTitle>
               <CardDescription>Enter your mobile number to receive OTP</CardDescription>
@@ -275,66 +298,25 @@ export default function DriverRegister() {
             </CardContent>
           </Card>
         ) : step === "otp" ? (
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                <KeyRound className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle>Verify OTP</CardTitle>
-              <CardDescription>Enter the 6-digit code sent to {mobileNumber}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {displayOtp && (
-                <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-center">
-                  <p className="text-xs text-amber-600 mb-1">Development Mode - OTP:</p>
-                  <p className="font-mono text-2xl font-bold text-amber-700">{displayOtp}</p>
-                </div>
-              )}
-              <Form {...otpForm}>
-                <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4">
-                  <FormField
-                    control={otpForm.control}
-                    name="otp"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col items-center">
-                        <FormLabel>One-Time Password</FormLabel>
-                        <FormControl>
-                          <InputOTP maxLength={6} {...field} data-testid="input-otp">
-                            <InputOTPGroup>
-                              <InputOTPSlot index={0} />
-                              <InputOTPSlot index={1} />
-                              <InputOTPSlot index={2} />
-                              <InputOTPSlot index={3} />
-                              <InputOTPSlot index={4} />
-                              <InputOTPSlot index={5} />
-                            </InputOTPGroup>
-                          </InputOTP>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={isLoading} className="w-full" data-testid="button-verify-otp">
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Verify OTP
-                  </Button>
-                  <div className="flex gap-3">
-                    <Button type="button" variant="outline" className="flex-1" onClick={() => setStep("mobile")} data-testid="button-change-number">
-                      Change Number
-                    </Button>
-                    <Button type="button" variant="outline" className="flex-1" onClick={handleResendOtp} disabled={isLoading} data-testid="button-resend-otp">
-                      Resend OTP
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+          <div className="animate-slide-up">
+            <OtpInputEnhanced
+              mobile={mobileNumber}
+              userType="driver"
+              expiresAt={otpExpiresAt}
+              displayOtp={displayOtp}
+              onVerify={handleVerifyOtp}
+              onResend={handleResendOtp}
+              onChangeNumber={() => setStep("mobile")}
+              isLoading={isLoading}
+              error={otpError}
+              remainingAttempts={remainingAttempts}
+            />
+          </div>
         ) : (
-          <Card>
+          <Card className="shadow-xl border-2 animate-slide-up">
             <CardHeader className="text-center">
-              <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center mb-4">
-                <Shield className="h-8 w-8 text-primary" />
+              <div className="mx-auto h-16 w-16 rounded-full gradient-primary flex items-center justify-center mb-4 shadow-lg">
+                <Shield className="h-8 w-8 text-white" />
               </div>
               <CardTitle>Driver Registration</CardTitle>
               <CardDescription>Provide your details and documents for verification</CardDescription>

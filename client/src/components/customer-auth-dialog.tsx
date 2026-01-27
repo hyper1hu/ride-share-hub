@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Phone, User, Calendar, LogIn, UserPlus } from "lucide-react";
+import { Loader2, Phone, User, Calendar, LogIn, UserPlus, KeyRound } from "lucide-react";
+import { OtpInputEnhanced } from "@/components/otp-input-enhanced";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +28,16 @@ interface CustomerAuthDialogProps {
 }
 
 export function CustomerAuthDialog({ open, onOpenChange, onSuccess }: CustomerAuthDialogProps) {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "otp">("login");
   const [isLoading, setIsLoading] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [displayOtp, setDisplayOtp] = useState<string | null>(null);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<Date | undefined>();
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState<number | undefined>();
+  const [pendingAction, setPendingAction] = useState<"login" | "register">("login");
   const { toast } = useToast();
-  const { loginCustomer, registerCustomer } = useAuth();
+  const { loginCustomer, registerCustomer, sendOtp, verifyOtp } = useAuth();
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -44,37 +51,133 @@ export function CustomerAuthDialog({ open, onOpenChange, onSuccess }: CustomerAu
 
   const handleLogin = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
-    const result = await loginCustomer(data.mobile);
+    setOtpError(null);
+    
+    // Send OTP first
+    const otpResult = await sendOtp(data.mobile, "customer");
     setIsLoading(false);
     
-    if (result.success) {
-      toast({ title: "Welcome back!", description: "You are now logged in." });
-      onOpenChange(false);
-      onSuccess?.();
-    } else if (result.needsRegistration) {
-      registerForm.setValue("mobile", data.mobile);
-      setMode("register");
-      toast({ 
-        title: "New user", 
-        description: "Please complete your registration.",
-        variant: "default"
-      });
+    if (otpResult.success) {
+      setMobileNumber(data.mobile);
+      setPendingAction("login");
+      if (otpResult.otp) {
+        setDisplayOtp(otpResult.otp);
+      }
+      if (otpResult.expiresAt) {
+        setOtpExpiresAt(new Date(otpResult.expiresAt));
+      }
+      setMode("otp");
+      toast({ title: "OTP Sent", description: "Please check your mobile for the 6-digit code." });
     } else {
-      toast({ title: "Login failed", description: result.error, variant: "destructive" });
+      toast({ title: "Failed to send OTP", description: otpResult.error, variant: "destructive" });
+    }
+  };
+
+  const handleVerifyOtpForLogin = async (otpValue: string) => {
+    setIsLoading(true);
+    setOtpError(null);
+    
+    const verifyResult = await verifyOtp(mobileNumber, otpValue, "customer");
+    
+    if (verifyResult.success) {
+      const result = await loginCustomer(mobileNumber);
+      setIsLoading(false);
+      
+      if (result.success) {
+        toast({ title: "Welcome back!", description: "You are now logged in." });
+        onOpenChange(false);
+        onSuccess?.();
+      } else if (result.needsRegistration) {
+        registerForm.setValue("mobile", mobileNumber);
+        setMode("register");
+        toast({ 
+          title: "New user", 
+          description: "Please complete your registration.",
+        });
+      } else {
+        setOtpError(result.error || "Login failed");
+        toast({ title: "Login failed", description: result.error, variant: "destructive" });
+      }
+    } else {
+      setIsLoading(false);
+      setOtpError(verifyResult.error || "Invalid OTP");
+      if (verifyResult.remainingAttempts !== undefined) {
+        setRemainingAttempts(verifyResult.remainingAttempts);
+      }
     }
   };
 
   const handleRegister = async (data: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
-    const result = await registerCustomer(data);
+    setOtpError(null);
+    
+    // Send OTP first
+    const otpResult = await sendOtp(data.mobile, "customer");
+    setIsLoading(false);
+    
+    if (otpResult.success) {
+      setMobileNumber(data.mobile);
+      setPendingAction("register");
+      registerForm.setValue("mobile", data.mobile);
+      if (otpResult.otp) {
+        setDisplayOtp(otpResult.otp);
+      }
+      if (otpResult.expiresAt) {
+        setOtpExpiresAt(new Date(otpResult.expiresAt));
+      }
+      setMode("otp");
+      toast({ title: "OTP Sent", description: "Please verify your mobile number." });
+    } else {
+      toast({ title: "Failed to send OTP", description: otpResult.error, variant: "destructive" });
+    }
+  };
+
+  const handleVerifyOtpForRegister = async (otpValue: string) => {
+    setIsLoading(true);
+    setOtpError(null);
+    
+    const verifyResult = await verifyOtp(mobileNumber, otpValue, "customer");
+    
+    if (verifyResult.success) {
+      const registerData = registerForm.getValues();
+      const result = await registerCustomer(registerData);
+      setIsLoading(false);
+      
+      if (result.success) {
+        toast({ title: "Registration successful!", description: "Welcome to RideShare!" });
+        onOpenChange(false);
+        onSuccess?.();
+      } else {
+        setOtpError(result.error || "Registration failed");
+        toast({ title: "Registration failed", description: result.error, variant: "destructive" });
+      }
+    } else {
+      setIsLoading(false);
+      setOtpError(verifyResult.error || "Invalid OTP");
+      if (verifyResult.remainingAttempts !== undefined) {
+        setRemainingAttempts(verifyResult.remainingAttempts);
+      }
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsLoading(true);
+    setOtpError(null);
+    const result = await sendOtp(mobileNumber, "customer");
     setIsLoading(false);
     
     if (result.success) {
-      toast({ title: "Registration successful!", description: "Welcome to RideShare!" });
-      onOpenChange(false);
-      onSuccess?.();
+      if (result.otp) {
+        setDisplayOtp(result.otp);
+      }
+      if (result.expiresAt) {
+        setOtpExpiresAt(new Date(result.expiresAt));
+      }
+      setRemainingAttempts(undefined);
+      toast({ title: "OTP Resent", description: "A new code has been sent to your mobile." });
     } else {
-      toast({ title: "Registration failed", description: result.error, variant: "destructive" });
+      setOtpError(result.error || "Failed to resend OTP");
+      toast({ title: "Failed to resend OTP", description: result.error, variant: "destructive" });
     }
   };
 
@@ -83,7 +186,12 @@ export function CustomerAuthDialog({ open, onOpenChange, onSuccess }: CustomerAu
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {mode === "login" ? (
+            {mode === "otp" ? (
+              <>
+                <KeyRound className="h-5 w-5 text-primary" />
+                Verify OTP
+              </>
+            ) : mode === "login" ? (
               <>
                 <LogIn className="h-5 w-5 text-primary" />
                 Login to Book
@@ -96,14 +204,31 @@ export function CustomerAuthDialog({ open, onOpenChange, onSuccess }: CustomerAu
             )}
           </DialogTitle>
           <DialogDescription>
-            {mode === "login" 
-              ? "Enter your mobile number to login or create an account"
-              : "Complete your profile to start booking rides"
+            {mode === "otp"
+              ? "Enter the verification code sent to your mobile"
+              : mode === "login" 
+                ? "Enter your mobile number to login or create an account"
+                : "Complete your profile to start booking rides"
             }
           </DialogDescription>
         </DialogHeader>
 
-        {mode === "login" ? (
+        {mode === "otp" ? (
+          <div className="animate-slide-up">
+            <OtpInputEnhanced
+              mobile={mobileNumber}
+              userType="customer"
+              expiresAt={otpExpiresAt}
+              displayOtp={displayOtp}
+              onVerify={pendingAction === "login" ? handleVerifyOtpForLogin : handleVerifyOtpForRegister}
+              onResend={handleResendOtp}
+              onChangeNumber={() => setMode(pendingAction === "login" ? "login" : "register")}
+              isLoading={isLoading}
+              error={otpError}
+              remainingAttempts={remainingAttempts}
+            />
+          </div>
+        ) : mode === "login" ? (
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
               <FormField

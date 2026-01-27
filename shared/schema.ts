@@ -158,3 +158,51 @@ export const adminLoginSchema = z.object({
   username: z.string().min(2, "Username is required"),
   password: z.string().min(4, "Password is required"),
 });
+
+// OTP table for persistent storage
+export const otps = pgTable("otps", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  mobile: varchar("mobile", { length: 15 }).notNull(),
+  otp: varchar("otp", { length: 6 }).notNull(),
+  userType: varchar("user_type", { length: 10 }).notNull(), // 'customer' or 'driver'
+  verified: integer("verified").notNull().default(0), // 0 = false, 1 = true
+  attempts: integer("attempts").notNull().default(0),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertOtpSchema = createInsertSchema(otps).omit({ id: true, createdAt: true });
+export type InsertOtp = z.infer<typeof insertOtpSchema>;
+export type Otp = typeof otps.$inferSelect;
+
+// Audit log table for security tracking
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  mobile: varchar("mobile", { length: 15 }).notNull(),
+  userType: varchar("user_type", { length: 10 }).notNull(),
+  action: varchar("action", { length: 50 }).notNull(), // 'otp_sent', 'otp_verified', 'otp_failed', 'login_success', 'login_failed'
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  success: integer("success").notNull(), // 0 = false, 1 = true
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
+// Rate limit tracking table
+export const rateLimits = pgTable("rate_limits", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  identifier: varchar("identifier", { length: 100 }).notNull().unique(), // mobile or IP
+  limitType: varchar("limit_type", { length: 20 }).notNull(), // 'otp_send', 'otp_verify'
+  attempts: integer("attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until"),
+  lastAttempt: timestamp("last_attempt").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertRateLimitSchema = createInsertSchema(rateLimits).omit({ id: true, createdAt: true });
+export type InsertRateLimit = z.infer<typeof insertRateLimitSchema>;
+export type RateLimit = typeof rateLimits.$inferSelect;

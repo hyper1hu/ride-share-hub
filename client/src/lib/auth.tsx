@@ -24,6 +24,8 @@ interface OtpResult {
   success: boolean;
   otp?: string;
   error?: string;
+  expiresAt?: string;
+  lockedUntil?: string;
 }
 
 interface AuthContextType {
@@ -33,7 +35,7 @@ interface AuthContextType {
   isCustomerLoggedIn: boolean;
   isDriverLoggedIn: boolean;
   sendOtp: (mobile: string, userType: "customer" | "driver") => Promise<OtpResult>;
-  verifyOtp: (mobile: string, otp: string, userType: "customer" | "driver") => Promise<{ success: boolean; error?: string }>;
+  verifyOtp: (mobile: string, otp: string, userType: "customer" | "driver") => Promise<{ success: boolean; error?: string; remainingAttempts?: number }>;
   loginCustomer: (mobile: string) => Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }>;
   registerCustomer: (data: { mobile: string; name: string; age: number }) => Promise<{ success: boolean; needsOtp?: boolean; error?: string }>;
   loginDriver: (mobile: string) => Promise<{ success: boolean; needsRegistration?: boolean; needsOtp?: boolean; error?: string }>;
@@ -58,12 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
 
-  const { data: customerData, isLoading: customerLoading, refetch: refetchCustomer } = useQuery({
+  const { data: customerData, isLoading: customerLoading, refetch: refetchCustomer } = useQuery<{ customer?: Customer }>({
     queryKey: ["/api/auth/customer/me"],
     retry: false,
   });
 
-  const { data: driverData, isLoading: driverLoading, refetch: refetchDriver } = useQuery({
+  const { data: driverData, isLoading: driverLoading, refetch: refetchDriver } = useQuery<{ driver?: Driver }>({
     queryKey: ["/api/auth/driver/me"],
     retry: false,
   });
@@ -89,22 +91,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await apiRequest("POST", "/api/auth/otp/send", { mobile, userType });
       const data = await response.json();
       if (response.ok) {
-        return { success: true, otp: data.otp };
+        return { 
+          success: true, 
+          otp: data.otp,
+          expiresAt: data.expiresAt,
+        };
       }
-      return { success: false, error: data.error };
+      return { 
+        success: false, 
+        error: data.error,
+        lockedUntil: data.lockedUntil,
+      };
     } catch (error: any) {
       return { success: false, error: error.message || "Failed to send OTP" };
     }
   };
 
-  const verifyOtp = async (mobile: string, otp: string, userType: "customer" | "driver"): Promise<{ success: boolean; error?: string }> => {
+  const verifyOtp = async (mobile: string, otp: string, userType: "customer" | "driver"): Promise<{ success: boolean; error?: string; remainingAttempts?: number }> => {
     try {
       const response = await apiRequest("POST", "/api/auth/otp/verify", { mobile, otp, userType });
       const data = await response.json();
       if (response.ok) {
         return { success: true };
       }
-      return { success: false, error: data.error };
+      return { 
+        success: false, 
+        error: data.error,
+        remainingAttempts: data.remainingAttempts,
+      };
     } catch (error: any) {
       return { success: false, error: error.message || "Failed to verify OTP" };
     }

@@ -5,19 +5,24 @@ import {
   type Customer, type InsertCustomer,
   type Driver, type InsertDriver,
   type Admin, type InsertAdmin,
+  type Otp, type InsertOtp,
+  type AuditLog, type InsertAuditLog,
+  type RateLimit, type InsertRateLimit,
   type DriverVerificationStatus,
-  customers, drivers, cars, bookings, users, admins
+  customers, drivers, cars, bookings, users, admins, otps, auditLogs, rateLimits
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, lt, gte } from "drizzle-orm";
 
 export interface OtpRecord {
+  id: string;
   mobile: string;
   otp: string;
   expiresAt: Date;
   verified: boolean;
   userType: "customer" | "driver";
+  attempts: number;
 }
 
 export interface IStorage {
@@ -58,13 +63,28 @@ export interface IStorage {
   getOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord | undefined>;
   verifyOtp(mobile: string, otp: string, userType: "customer" | "driver"): Promise<boolean>;
   clearOtp(mobile: string, userType: "customer" | "driver"): Promise<void>;
+  
+  // Rate limiting
+  checkRateLimit(identifier: string, limitType: string, maxAttempts: number, windowMinutes: number): Promise<{ allowed: boolean; lockedUntil?: Date }>;
+  recordAttempt(identifier: string, limitType: string): Promise<void>;
+  lockIdentifier(identifier: string, limitType: string, lockMinutes: number): Promise<void>;
+  
+  // Audit logging
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
 }
 
 export class DatabaseStorage implements IStorage {
-  private otps: Map<string, OtpRecord>;
-
   constructor() {
-    this.otps = new Map();
+    // Clean up expired OTPs periodically
+    setInterval(() => this.cleanupExpiredOtps(), 5 * 60 * 1000); // Every 5 minutes
+  }
+
+  private async cleanupExpiredOtps(): Promise<void> {
+    try {
+      await db.delete(otps).where(lt(otps.expiresAt, new Date()));
+    } catch (error) {
+      console.error("[CLEANUP] Failed to clean expired OTPs:", error);
+    }
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -242,47 +262,205 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord> {
-    const key = `${userType}:${mobile}`;
-    const otp = this.generateOtp();
-    const record: OtpRecord = {
+    // Clear any existing OTP for this mobile/userType
+    await db.delete(otps).where(
+      and(
+        eq(otps.mobile, mobile),
+        eq(otps.userType, userType)
+      )
+    );
+
+    const id = randomUUID();
+    const otpCode = this.generateOtp();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    const [record] = await db.insert(otps).values({
+      id,
       mobile,
-      otp,
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-      verified: false,
+      otp: otpCode,
       userType,
+      verified: 0,
+      attempts: 0,
+      expiresAt,
+    }).returning();
+
+    return {
+      id: record.id,
+      mobile: record.mobile,
+      otp: record.otp,
+      userType: record.userType as "customer" | "driver",
+      verified: record.verified === 1,
+      attempts: record.attempts,
+      expiresAt: record.expiresAt,
     };
-    this.otps.set(key, record);
-    return record;
   }
 
   async getOtp(mobile: string, userType: "customer" | "driver"): Promise<OtpRecord | undefined> {
-    const key = `${userType}:${mobile}`;
-    const record = this.otps.get(key);
+    const [record] = await db.select().from(otps)
+      .where(
+        and(
+          eq(otps.mobile, mobile),
+          eq(otps.userType, userType),
+          gte(otps.expiresAt, new Date())
+        )
+      )
+      .orderBy(desc(otps.createdAt))
+      .limit(1);
+
     if (!record) return undefined;
-    if (new Date() > record.expiresAt) {
-      this.otps.delete(key);
-      return undefined;
-    }
-    return record;
+
+    return {
+      id: record.id,
+      mobile: record.mobile,
+      otp: record.otp,
+      userType: record.userType as "customer" | "driver",
+      verified: record.verified === 1,
+      attempts: record.attempts,
+      expiresAt: record.expiresAt,
+    };
   }
 
   async verifyOtp(mobile: string, otp: string, userType: "customer" | "driver"): Promise<boolean> {
-    const key = `${userType}:${mobile}`;
-    const record = this.otps.get(key);
+    const record = await this.getOtp(mobile, userType);
     if (!record) return false;
-    if (new Date() > record.expiresAt) {
-      this.otps.delete(key);
+    
+    // Check if already locked due to too many attempts
+    if (record.attempts >= 5) {
       return false;
     }
-    if (record.otp !== otp) return false;
-    record.verified = true;
-    this.otps.set(key, record);
+
+    // Increment attempts
+    await db.update(otps)
+      .set({ attempts: record.attempts + 1 })
+      .where(eq(otps.id, record.id));
+
+    if (record.otp !== otp) {
+      return false;
+    }
+
+    // Mark as verified
+    await db.update(otps)
+      .set({ verified: 1 })
+      .where(eq(otps.id, record.id));
+
     return true;
   }
 
   async clearOtp(mobile: string, userType: "customer" | "driver"): Promise<void> {
-    const key = `${userType}:${mobile}`;
-    this.otps.delete(key);
+    await db.delete(otps).where(
+      and(
+        eq(otps.mobile, mobile),
+        eq(otps.userType, userType)
+      )
+    );
+  }
+
+  async checkRateLimit(
+    identifier: string, 
+    limitType: string, 
+    maxAttempts: number, 
+    windowMinutes: number
+  ): Promise<{ allowed: boolean; lockedUntil?: Date }> {
+    const [record] = await db.select().from(rateLimits)
+      .where(
+        and(
+          eq(rateLimits.identifier, identifier),
+          eq(rateLimits.limitType, limitType)
+        )
+      )
+      .limit(1);
+
+    const now = new Date();
+
+    // Check if locked
+    if (record?.lockedUntil && record.lockedUntil > now) {
+      return { allowed: false, lockedUntil: record.lockedUntil };
+    }
+
+    // Check if within window
+    if (record) {
+      const windowStart = new Date(now.getTime() - windowMinutes * 60 * 1000);
+      
+      if (record.lastAttempt > windowStart) {
+        if (record.attempts >= maxAttempts) {
+          return { allowed: false };
+        }
+      } else {
+        // Reset counter if outside window
+        await db.update(rateLimits)
+          .set({ attempts: 0, lastAttempt: now })
+          .where(eq(rateLimits.id, record.id));
+      }
+    }
+
+    return { allowed: true };
+  }
+
+  async recordAttempt(identifier: string, limitType: string): Promise<void> {
+    const [existing] = await db.select().from(rateLimits)
+      .where(
+        and(
+          eq(rateLimits.identifier, identifier),
+          eq(rateLimits.limitType, limitType)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      await db.update(rateLimits)
+        .set({ 
+          attempts: existing.attempts + 1,
+          lastAttempt: new Date()
+        })
+        .where(eq(rateLimits.id, existing.id));
+    } else {
+      const id = randomUUID();
+      await db.insert(rateLimits).values({
+        id,
+        identifier,
+        limitType,
+        attempts: 1,
+        lastAttempt: new Date(),
+      });
+    }
+  }
+
+  async lockIdentifier(identifier: string, limitType: string, lockMinutes: number): Promise<void> {
+    const lockedUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
+    
+    const [existing] = await db.select().from(rateLimits)
+      .where(
+        and(
+          eq(rateLimits.identifier, identifier),
+          eq(rateLimits.limitType, limitType)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      await db.update(rateLimits)
+        .set({ lockedUntil })
+        .where(eq(rateLimits.id, existing.id));
+    } else {
+      const id = randomUUID();
+      await db.insert(rateLimits).values({
+        id,
+        identifier,
+        limitType,
+        attempts: 0,
+        lockedUntil,
+        lastAttempt: new Date(),
+      });
+    }
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const id = randomUUID();
+    const [auditLog] = await db.insert(auditLogs).values({
+      ...log,
+      id,
+    }).returning();
+    return auditLog;
   }
 }
 

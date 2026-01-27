@@ -52,13 +52,13 @@ const popularRoutes = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-50">
+      <header className="border-b bg-card/50 backdrop-blur sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-              <Car className="h-5 w-5 text-primary-foreground" />
+            <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center shadow-lg">
+              <Car className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-xl">RideShare</span>
+            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">RideShare</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/customer">
@@ -86,8 +86,8 @@ export default function Home() {
         <div className="container mx-auto px-4 py-16 md:py-24 relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <Badge variant="secondary" className="mb-4 gap-1.5">
-                <Zap className="h-3 w-3" />
+              <Badge variant="secondary" className="mb-4 gap-1.5 animate-bounce-in shadow-md">
+                <Zap className="h-3 w-3 text-amber-500" />
                 West Bengal's Trusted Transport Network
               </Badge>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-tight">
@@ -99,14 +99,14 @@ export default function Home() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link href="/customer">
-                  <Button size="lg" className="gap-2 w-full sm:w-auto" data-testid="link-customer">
+                  <Button size="lg" className="gap-2 w-full sm:w-auto shadow-lg hover-elevate gradient-primary border-0" data-testid="link-customer">
                     <Users className="h-5 w-5" />
                     Find a Ride
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Link href="/driver">
-                  <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto" data-testid="link-driver">
+                  <Button size="lg" variant="outline" className="gap-2 w-full sm:w-auto shadow-md hover-elevate" data-testid="link-driver">
                     <Car className="h-5 w-5" />
                     Register as Driver
                   </Button>
@@ -124,10 +124,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="hidden lg:block">
-              <Card className="p-6 bg-card/80 backdrop-blur">
+            <div className="hidden lg:block animate-slide-up">
+              <Card className="p-6 bg-card/80 backdrop-blur shadow-xl border-2">
                 <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-white" />
+                  </div>
                   Popular Routes
                 </h3>
                 <div className="space-y-3">
