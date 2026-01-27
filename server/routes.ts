@@ -1,6 +1,10 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { firebaseStorage } from "./firebase-storage";
+
+// Use Firebase storage instead of PostgreSQL
+const db = firebaseStorage;
 import { insertCarSchema, insertBookingSchema, insertCustomerSchema, insertDriverSchema, loginSchema, adminLoginSchema } from "@shared/schema";
 import { z } from "zod";
 import path from "path";
@@ -61,17 +65,17 @@ async function comparePassword(password: string, hash: string): Promise<boolean>
 
 async function initializeSampleData(): Promise<void> {
   try {
-    const existingAdmin = await storage.getAdminByUsername("admin");
+    const existingAdmin = await db.getAdminByUsername("admin");
     if (!existingAdmin) {
       const hashedPassword = await hashPassword("admin123");
-      await storage.createAdmin({
+      await db.createAdmin({
         username: "admin",
         passwordHash: hashedPassword,
       });
       console.log("[INIT] Default admin created (username: admin, password: admin123)");
     }
 
-    const existingDrivers = await storage.getDrivers();
+    const existingDrivers = await db.getDrivers();
     if (existingDrivers.length === 0) {
       const sampleDrivers = [
         { name: "Rajesh Kumar", mobile: "9876543210", age: 35, aadhaarNumber: "123456789012", licenseNumber: "WB2019123456" },
@@ -83,8 +87,8 @@ async function initializeSampleData(): Promise<void> {
 
       const createdDrivers: any[] = [];
       for (const driverData of sampleDrivers) {
-        const driver = await storage.createDriver(driverData);
-        await storage.updateDriver(driver.id, { verificationStatus: "approved" });
+        const driver = await db.createDriver(driverData);
+        await db.updateDriver(driver.id, { verificationStatus: "approved" });
         createdDrivers.push({ ...driver, verificationStatus: "approved" });
       }
       console.log("[INIT] 5 sample approved drivers created");
@@ -221,7 +225,7 @@ async function initializeSampleData(): Promise<void> {
       ];
 
       for (const vehicleData of sampleVehicles) {
-        await storage.createCar(vehicleData);
+        await db.createCar(vehicleData);
       }
       console.log("[INIT] 8 sample vehicles created with West Bengal routes");
     }
@@ -240,7 +244,7 @@ export async function registerRoutes(
   app.post("/api/auth/admin/login", async (req, res) => {
     try {
       const { username, password } = adminLoginSchema.parse(req.body);
-      const admin = await storage.getAdminByUsername(username);
+      const admin = await db.getAdminByUsername(username);
       if (!admin) {
         return res.status(401).json({ error: "Invalid username or password" });
       }
@@ -273,7 +277,7 @@ export async function registerRoutes(
     if (!req.session.adminId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const admin = await storage.getAdminByUsername("admin");
+    const admin = await db.getAdminByUsername("admin");
     if (!admin || admin.id !== req.session.adminId) {
       req.session.destroy(() => {});
       return res.status(401).json({ error: "Session expired" });
@@ -297,9 +301,9 @@ export async function registerRoutes(
       const userAgent = req.get("user-agent") || "unknown";
 
       // Check rate limit for OTP sending (max 3 per 15 minutes per mobile)
-      const rateCheck = await storage.checkRateLimit(mobile, "otp_send", 3, 15);
+      const rateCheck = await db.checkRateLimit(mobile, "otp_send", 3, 15);
       if (!rateCheck.allowed) {
-        await storage.createAuditLog({
+        await db.createAuditLog({
           mobile,
           userType,
           action: "otp_send_blocked",
@@ -320,10 +324,10 @@ export async function registerRoutes(
       }
 
       // Record attempt
-      await storage.recordAttempt(mobile, "otp_send");
+      await db.recordAttempt(mobile, "otp_send");
 
       // Create OTP
-      const otpRecord = await storage.createOtp(mobile, userType);
+      const otpRecord = await db.createOtp(mobile, userType);
       
       // Send OTP via Firebase/SMS (or log in development)
       const smsSent = await sendOtpViaSms(mobile, otpRecord.otp);
@@ -333,7 +337,7 @@ export async function registerRoutes(
       }
       
       // Log success
-      await storage.createAuditLog({
+      await db.createAuditLog({
         mobile,
         userType,
         action: "otp_sent",
@@ -366,9 +370,9 @@ export async function registerRoutes(
       const userAgent = req.get("user-agent") || "unknown";
 
       // Check rate limit for OTP verification (max 5 attempts per 30 minutes)
-      const rateCheck = await storage.checkRateLimit(mobile, "otp_verify", 5, 30);
+      const rateCheck = await db.checkRateLimit(mobile, "otp_verify", 5, 30);
       if (!rateCheck.allowed) {
-        await storage.createAuditLog({
+        await db.createAuditLog({
           mobile,
           userType,
           action: "otp_verify_blocked",
@@ -389,10 +393,10 @@ export async function registerRoutes(
       }
 
       // Get OTP record to check attempts
-      const otpRecord = await storage.getOtp(mobile, userType);
+      const otpRecord = await db.getOtp(mobile, userType);
       if (otpRecord && otpRecord.attempts >= 5) {
-        await storage.lockIdentifier(mobile, "otp_verify", 30);
-        await storage.createAuditLog({
+        await db.lockIdentifier(mobile, "otp_verify", 30);
+        await db.createAuditLog({
           mobile,
           userType,
           action: "otp_verify_locked",
@@ -408,12 +412,12 @@ export async function registerRoutes(
       }
 
       // Verify OTP
-      const verified = await storage.verifyOtp(mobile, otp, userType);
+      const verified = await db.verifyOtp(mobile, otp, userType);
       
       if (!verified) {
         // Record failed attempt
-        await storage.recordAttempt(mobile, "otp_verify");
-        await storage.createAuditLog({
+        await db.recordAttempt(mobile, "otp_verify");
+        await db.createAuditLog({
           mobile,
           userType,
           action: "otp_verify_failed",
@@ -431,7 +435,7 @@ export async function registerRoutes(
       }
 
       // Log success
-      await storage.createAuditLog({
+      await db.createAuditLog({
         mobile,
         userType,
         action: "otp_verified",
@@ -453,21 +457,21 @@ export async function registerRoutes(
   app.post("/api/auth/customer/register", async (req, res) => {
     try {
       const validatedData = insertCustomerSchema.parse(req.body);
-      const otpRecord = await storage.getOtp(validatedData.mobile, "customer");
+      const otpRecord = await db.getOtp(validatedData.mobile, "customer");
       if (!otpRecord || !otpRecord.verified) {
         return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
       }
-      const existingCustomer = await storage.getCustomerByMobile(validatedData.mobile);
+      const existingCustomer = await db.getCustomerByMobile(validatedData.mobile);
       if (existingCustomer) {
         req.session.customerId = existingCustomer.id;
         req.session.userType = "customer";
-        await storage.clearOtp(validatedData.mobile, "customer");
+        await db.clearOtp(validatedData.mobile, "customer");
         return res.json({ customer: existingCustomer, message: "Welcome back!" });
       }
-      const customer = await storage.createCustomer(validatedData);
+      const customer = await db.createCustomer(validatedData);
       req.session.customerId = customer.id;
       req.session.userType = "customer";
-      await storage.clearOtp(validatedData.mobile, "customer");
+      await db.clearOtp(validatedData.mobile, "customer");
       res.status(201).json({ customer, message: "Registration successful!" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -480,17 +484,17 @@ export async function registerRoutes(
   app.post("/api/auth/customer/login", async (req, res) => {
     try {
       const { mobile } = loginSchema.parse(req.body);
-      const otpRecord = await storage.getOtp(mobile, "customer");
+      const otpRecord = await db.getOtp(mobile, "customer");
       if (!otpRecord || !otpRecord.verified) {
         return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
       }
-      const customer = await storage.getCustomerByMobile(mobile);
+      const customer = await db.getCustomerByMobile(mobile);
       if (!customer) {
         return res.status(404).json({ error: "No account found with this mobile number", needsRegistration: true });
       }
       req.session.customerId = customer.id;
       req.session.userType = "customer";
-      await storage.clearOtp(mobile, "customer");
+      await db.clearOtp(mobile, "customer");
       res.json({ customer, message: "Login successful!" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -504,7 +508,7 @@ export async function registerRoutes(
     if (!req.session.customerId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const customer = await storage.getCustomer(req.session.customerId);
+    const customer = await db.getCustomer(req.session.customerId);
     if (!customer) {
       req.session.destroy(() => {});
       return res.status(401).json({ error: "Session expired" });
@@ -515,19 +519,19 @@ export async function registerRoutes(
   app.post("/api/auth/driver/register", async (req, res) => {
     try {
       const validatedData = insertDriverSchema.parse(req.body);
-      const otpRecord = await storage.getOtp(validatedData.mobile, "driver");
+      const otpRecord = await db.getOtp(validatedData.mobile, "driver");
       if (!otpRecord || !otpRecord.verified) {
         return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
       }
-      const existingDriver = await storage.getDriverByMobile(validatedData.mobile);
+      const existingDriver = await db.getDriverByMobile(validatedData.mobile);
       if (existingDriver) {
-        await storage.clearOtp(validatedData.mobile, "driver");
+        await db.clearOtp(validatedData.mobile, "driver");
         return res.status(400).json({ error: "A driver account already exists with this mobile number" });
       }
-      const driver = await storage.createDriver(validatedData);
+      const driver = await db.createDriver(validatedData);
       req.session.driverId = driver.id;
       req.session.userType = "driver";
-      await storage.clearOtp(validatedData.mobile, "driver");
+      await db.clearOtp(validatedData.mobile, "driver");
       res.status(201).json({ 
         driver, 
         message: "Registration submitted! Please wait for admin verification before you can list vehicles." 
@@ -543,17 +547,17 @@ export async function registerRoutes(
   app.post("/api/auth/driver/login", async (req, res) => {
     try {
       const { mobile } = loginSchema.parse(req.body);
-      const otpRecord = await storage.getOtp(mobile, "driver");
+      const otpRecord = await db.getOtp(mobile, "driver");
       if (!otpRecord || !otpRecord.verified) {
         return res.status(400).json({ error: "Please verify your mobile number with OTP first", needsOtp: true });
       }
-      const driver = await storage.getDriverByMobile(mobile);
+      const driver = await db.getDriverByMobile(mobile);
       if (!driver) {
         return res.status(404).json({ error: "No driver account found with this mobile number", needsRegistration: true });
       }
       req.session.driverId = driver.id;
       req.session.userType = "driver";
-      await storage.clearOtp(mobile, "driver");
+      await db.clearOtp(mobile, "driver");
       res.json({ driver, message: "Login successful!" });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -567,7 +571,7 @@ export async function registerRoutes(
     if (!req.session.driverId) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    const driver = await storage.getDriver(req.session.driverId);
+    const driver = await db.getDriver(req.session.driverId);
     if (!driver) {
       req.session.destroy(() => {});
       return res.status(401).json({ error: "Session expired" });
@@ -590,7 +594,7 @@ export async function registerRoutes(
 
   app.get("/api/customers", async (req, res) => {
     try {
-      const customers = await storage.getCustomers();
+      const customers = await db.getCustomers();
       res.json(customers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch customers" });
@@ -602,9 +606,9 @@ export async function registerRoutes(
       const status = req.query.status as string | undefined;
       let drivers;
       if (status && ["pending", "approved", "rejected"].includes(status)) {
-        drivers = await storage.getDriversByStatus(status as any);
+        drivers = await db.getDriversByStatus(status as any);
       } else {
-        drivers = await storage.getDrivers();
+        drivers = await db.getDrivers();
       }
       const sanitizedDrivers = drivers.map(d => ({
         ...d,
@@ -619,7 +623,7 @@ export async function registerRoutes(
   app.get("/api/drivers/:id", async (req, res) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const driver = await storage.getDriver(id);
+      const driver = await db.getDriver(id);
       if (!driver) {
         return res.status(404).json({ error: "Driver not found" });
       }
@@ -636,7 +640,7 @@ export async function registerRoutes(
       if (!["approved", "rejected"].includes(status)) {
         return res.status(400).json({ error: "Invalid status" });
       }
-      const driver = await storage.updateDriver(id, {
+      const driver = await db.updateDriver(id, {
         verificationStatus: status,
         rejectionReason: status === "rejected" ? rejectionReason : undefined,
       });
@@ -651,7 +655,7 @@ export async function registerRoutes(
 
   app.get("/api/cars", async (req, res) => {
     try {
-      const cars = await storage.getCars();
+      const cars = await db.getCars();
       res.json(cars);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch cars" });
@@ -661,7 +665,7 @@ export async function registerRoutes(
   app.get("/api/cars/search", async (req, res) => {
     try {
       const { origin, destination } = req.query;
-      const cars = await storage.getCars();
+      const cars = await db.getCars();
       const availableCars = cars.filter(car => car.status === "available");
       
       if (!origin && !destination) {
@@ -713,7 +717,7 @@ export async function registerRoutes(
   app.get("/api/cars/:id", async (req, res) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const car = await storage.getCar(id);
+      const car = await db.getCar(id);
       if (!car) {
         return res.status(404).json({ error: "Car not found" });
       }
@@ -726,7 +730,7 @@ export async function registerRoutes(
   app.post("/api/cars", async (req, res) => {
     try {
       if (req.session.driverId) {
-        const driver = await storage.getDriver(req.session.driverId);
+        const driver = await db.getDriver(req.session.driverId);
         if (!driver) {
           return res.status(401).json({ error: "Driver not found" });
         }
@@ -742,7 +746,7 @@ export async function registerRoutes(
       }
       
       const validatedData = insertCarSchema.parse(req.body);
-      const car = await storage.createCar(validatedData);
+      const car = await db.createCar(validatedData);
       res.status(201).json(car);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -755,7 +759,7 @@ export async function registerRoutes(
   app.patch("/api/cars/:id", async (req, res) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const car = await storage.updateCar(id, req.body);
+      const car = await db.updateCar(id, req.body);
       if (!car) {
         return res.status(404).json({ error: "Car not found" });
       }
@@ -768,7 +772,7 @@ export async function registerRoutes(
   app.delete("/api/cars/:id", async (req, res) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const success = await storage.deleteCar(id);
+      const success = await db.deleteCar(id);
       if (!success) {
         return res.status(404).json({ error: "Car not found" });
       }
@@ -780,7 +784,7 @@ export async function registerRoutes(
 
   app.get("/api/bookings", async (req, res) => {
     try {
-      const bookings = await storage.getBookings();
+      const bookings = await db.getBookings();
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
@@ -789,7 +793,7 @@ export async function registerRoutes(
 
   app.get("/api/bookings/my", requireCustomerAuth, async (req, res) => {
     try {
-      const bookings = await storage.getBookingsByCustomerId(req.session.customerId!);
+      const bookings = await db.getBookingsByCustomerId(req.session.customerId!);
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
@@ -799,7 +803,7 @@ export async function registerRoutes(
   app.get("/api/bookings/:id", async (req, res) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const booking = await storage.getBooking(id);
+      const booking = await db.getBooking(id);
       if (!booking) {
         return res.status(404).json({ error: "Booking not found" });
       }
@@ -814,7 +818,7 @@ export async function registerRoutes(
       const bookingData = { ...req.body };
       if (req.session.customerId) {
         bookingData.customerId = req.session.customerId;
-        const customer = await storage.getCustomer(req.session.customerId);
+        const customer = await db.getCustomer(req.session.customerId);
         if (customer) {
           bookingData.customerName = customer.name;
           bookingData.customerPhone = customer.mobile;
@@ -822,11 +826,11 @@ export async function registerRoutes(
       }
       
       const validatedData = insertBookingSchema.parse(bookingData);
-      const car = await storage.getCar(validatedData.carId);
+      const car = await db.getCar(validatedData.carId);
       if (!car) {
         return res.status(404).json({ error: "Car not found" });
       }
-      const existingBookings = await storage.getBookingsByCarId(car.id);
+      const existingBookings = await db.getBookingsByCarId(car.id);
       const bookedSeats = existingBookings
         .filter(b => b.status !== "cancelled")
         .reduce((sum, b) => sum + b.seatsBooked, 0);
@@ -837,7 +841,7 @@ export async function registerRoutes(
       if (validatedData.tripType === "round_trip") {
         totalFare += car.returnFare * validatedData.seatsBooked;
       }
-      const booking = await storage.createBooking(validatedData, totalFare);
+      const booking = await db.createBooking(validatedData, totalFare);
       res.status(201).json(booking);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -850,7 +854,7 @@ export async function registerRoutes(
   app.patch("/api/bookings/:id", async (req, res) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const booking = await storage.updateBooking(id, req.body);
+      const booking = await db.updateBooking(id, req.body);
       if (!booking) {
         return res.status(404).json({ error: "Booking not found" });
       }
@@ -863,10 +867,10 @@ export async function registerRoutes(
   app.get("/api/stats", async (req, res) => {
     try {
       const [cars, bookings, customers, drivers] = await Promise.all([
-        storage.getCars(),
-        storage.getBookings(),
-        storage.getCustomers(),
-        storage.getDrivers(),
+        db.getCars(),
+        db.getBookings(),
+        db.getCustomers(),
+        db.getDrivers(),
       ]);
       
       const pendingDrivers = drivers.filter(d => d.verificationStatus === "pending").length;
