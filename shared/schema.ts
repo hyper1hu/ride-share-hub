@@ -2,7 +2,7 @@ import { pgTable, text, integer, timestamp, varchar, serial } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Comprehensive vehicle types for all India
+// Comprehensive vehicle types for all India (excluding two-wheelers)
 export const vehicleTypes = [
   "sedan", 
   "hatchback",
@@ -16,8 +16,6 @@ export const vehicleTypes = [
   "sleeper_bus",
   "ac_bus",
   "non_ac_bus",
-  "motorcycle", 
-  "scooter",
   "auto_rickshaw", 
   "tempo",
   "mini_truck",
@@ -45,8 +43,6 @@ export const vehicleTypeLabels: Record<VehicleType, string> = {
   sleeper_bus: "Sleeper Bus",
   ac_bus: "AC Bus",
   non_ac_bus: "Non-AC Bus",
-  motorcycle: "Motorcycle",
-  scooter: "Scooter",
   auto_rickshaw: "Auto Rickshaw",
   tempo: "Tempo",
   mini_truck: "Mini Truck",
@@ -260,3 +256,138 @@ export const rateLimits = pgTable("rate_limits", {
 export const insertRateLimitSchema = createInsertSchema(rateLimits).omit({ id: true, createdAt: true });
 export type InsertRateLimit = z.infer<typeof insertRateLimitSchema>;
 export type RateLimit = typeof rateLimits.$inferSelect;
+
+// Driver Vehicles table - for managing multiple vehicles per driver
+export const driverVehicles = pgTable("driver_vehicles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  driverId: varchar("driver_id", { length: 36 }).notNull(),
+  vehicleType: varchar("vehicle_type", { length: 20 }).notNull(),
+  vehicleModel: varchar("vehicle_model", { length: 100 }).notNull(),
+  vehicleNumber: varchar("vehicle_number", { length: 20 }).notNull().unique(),
+  rcImage: text("rc_image"),
+  insuranceImage: text("insurance_image"),
+  seatingCapacity: integer("seating_capacity").notNull(),
+  isActive: integer("is_active").notNull().default(1), // 0 = inactive, 1 = active
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDriverVehicleSchema = createInsertSchema(driverVehicles).omit({ id: true, createdAt: true }).extend({
+  driverId: z.string(),
+  vehicleType: z.enum(vehicleTypes),
+  vehicleModel: z.string().min(2, "Vehicle model is required"),
+  vehicleNumber: z.string().min(2, "Vehicle number is required"),
+  seatingCapacity: z.number().min(1, "Seating capacity must be at least 1").max(60, "Maximum 60 seats"),
+});
+
+export type InsertDriverVehicle = z.infer<typeof insertDriverVehicleSchema>;
+export type DriverVehicle = typeof driverVehicles.$inferSelect;
+
+// Customer Inquiries table
+export const inquiries = pgTable("inquiries", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  customerId: varchar("customer_id", { length: 36 }).notNull(),
+  customerName: varchar("customer_name", { length: 100 }).notNull(),
+  customerPhone: varchar("customer_phone", { length: 15 }).notNull(),
+  vehicleId: varchar("vehicle_id", { length: 36 }),
+  driverId: varchar("driver_id", { length: 36 }),
+  origin: varchar("origin", { length: 200 }).notNull(),
+  destination: varchar("destination", { length: 200 }).notNull(),
+  vehicleType: varchar("vehicle_type", { length: 20 }),
+  travelDate: varchar("travel_date", { length: 20 }),
+  passengers: integer("passengers"),
+  message: text("message"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, responded, closed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertInquirySchema = createInsertSchema(inquiries).omit({ id: true, createdAt: true, status: true }).extend({
+  customerId: z.string().optional(),
+  customerName: z.string().min(2, "Name is required"),
+  customerPhone: z.string().min(10, "Phone number is required"),
+  origin: z.string().min(2, "Origin is required"),
+  destination: z.string().min(2, "Destination is required"),
+  passengers: z.number().min(1, "At least 1 passenger").optional(),
+});
+
+export type InsertInquiry = z.infer<typeof insertInquirySchema>;
+export type Inquiry = typeof inquiries.$inferSelect;
+
+// Messages table for customer-driver communication
+export const messages = pgTable("messages", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  senderId: varchar("sender_id", { length: 36 }).notNull(),
+  senderType: varchar("sender_type", { length: 10 }).notNull(), // 'customer' or 'driver'
+  receiverId: varchar("receiver_id", { length: 36 }).notNull(),
+  receiverType: varchar("receiver_type", { length: 10 }).notNull(),
+  bookingId: varchar("booking_id", { length: 36 }),
+  message: text("message").notNull(),
+  isRead: integer("is_read").notNull().default(0), // 0 = unread, 1 = read
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true, isRead: true }).extend({
+  senderId: z.string(),
+  senderType: z.enum(["customer", "driver"]),
+  receiverId: z.string(),
+  receiverType: z.enum(["customer", "driver"]),
+  message: z.string().min(1, "Message cannot be empty"),
+});
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
+// Support Tickets table
+export const supportTickets = pgTable("support_tickets", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  userType: varchar("user_type", { length: 10 }).notNull(), // 'customer' or 'driver'
+  userName: varchar("user_name", { length: 100 }).notNull(),
+  userPhone: varchar("user_phone", { length: 15 }).notNull(),
+  userEmail: varchar("user_email", { length: 100 }),
+  subject: varchar("subject", { length: 200 }).notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // 'booking', 'payment', 'technical', 'other'
+  description: text("description").notNull(),
+  priority: varchar("priority", { length: 20 }).notNull().default("medium"), // low, medium, high
+  status: varchar("status", { length: 20 }).notNull().default("open"), // open, in_progress, resolved, closed
+  adminResponse: text("admin_response"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({ id: true, createdAt: true, updatedAt: true, status: true, adminResponse: true }).extend({
+  userId: z.string().optional(),
+  userType: z.enum(["customer", "driver"]),
+  userName: z.string().min(2, "Name is required"),
+  userPhone: z.string().min(10, "Phone number is required"),
+  userEmail: z.string().email("Valid email is required").optional(),
+  subject: z.string().min(5, "Subject is required"),
+  category: z.enum(["booking", "payment", "technical", "other"]),
+  description: z.string().min(10, "Please provide more details"),
+  priority: z.enum(["low", "medium", "high"]).optional(),
+});
+
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+
+// Driver Schedules table
+export const driverSchedules = pgTable("driver_schedules", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  driverId: varchar("driver_id", { length: 36 }).notNull(),
+  vehicleId: varchar("vehicle_id", { length: 36 }).notNull(),
+  dayOfWeek: varchar("day_of_week", { length: 10 }).notNull(), // monday, tuesday, etc.
+  startTime: varchar("start_time", { length: 10 }).notNull(),
+  endTime: varchar("end_time", { length: 10 }).notNull(),
+  isAvailable: integer("is_available").notNull().default(1), // 0 = not available, 1 = available
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertDriverScheduleSchema = createInsertSchema(driverSchedules).omit({ id: true, createdAt: true }).extend({
+  driverId: z.string(),
+  vehicleId: z.string(),
+  dayOfWeek: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+});
+
+export type InsertDriverSchedule = z.infer<typeof insertDriverScheduleSchema>;
+export type DriverSchedule = typeof driverSchedules.$inferSelect;

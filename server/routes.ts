@@ -967,5 +967,330 @@ export async function registerRoutes(
     }
   });
 
+  // ===== DRIVER VEHICLES ENDPOINTS =====
+  
+  // Get driver's vehicles
+  app.get("/api/driver/vehicles", requireDriverAuth, async (req, res) => {
+    try {
+      const driverId = req.session.driverId!;
+      const vehicles = await db.getDriverVehicles(driverId);
+      res.json(vehicles);
+    } catch (error) {
+      console.error("Get driver vehicles error:", error);
+      res.status(500).json({ error: "Failed to fetch vehicles" });
+    }
+  });
+
+  // Add new vehicle
+  app.post("/api/driver/vehicles", requireDriverAuth, async (req, res) => {
+    try {
+      const driverId = req.session.driverId!;
+      const { insertDriverVehicleSchema } = await import("@shared/schema");
+      const vehicleData = insertDriverVehicleSchema.parse(req.body);
+      
+      const vehicle = await db.createDriverVehicle({
+        ...vehicleData,
+        driverId,
+      });
+      
+      res.json(vehicle);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("Add vehicle error:", error);
+      res.status(500).json({ error: "Failed to add vehicle" });
+    }
+  });
+
+  // Update vehicle
+  app.patch("/api/driver/vehicles/:id", requireDriverAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const driverId = req.session.driverId!;
+      
+      const vehicle = await db.getDriverVehicle(id);
+      if (!vehicle || vehicle.driverId !== driverId) {
+        return res.status(404).json({ error: "Vehicle not found" });
+      }
+      
+      await db.updateDriverVehicle(id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Update vehicle error:", error);
+      res.status(500).json({ error: "Failed to update vehicle" });
+    }
+  });
+
+  // Delete vehicle
+  app.delete("/api/driver/vehicles/:id", requireDriverAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const driverId = req.session.driverId!;
+      
+      const vehicle = await db.getDriverVehicle(id);
+      if (!vehicle || vehicle.driverId !== driverId) {
+        return res.status(404).json({ error: "Vehicle not found" });
+      }
+      
+      await db.deleteDriverVehicle(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete vehicle error:", error);
+      res.status(500).json({ error: "Failed to delete vehicle" });
+    }
+  });
+
+  // ===== INQUIRY ENDPOINTS =====
+  
+  // Create inquiry (customer)
+  app.post("/api/inquiries", requireCustomerAuth, async (req, res) => {
+    try {
+      const customerId = req.session.customerId!;
+      const { insertInquirySchema } = await import("@shared/schema");
+      const inquiryData = insertInquirySchema.parse(req.body);
+      
+      const inquiry = await db.createInquiry({
+        ...inquiryData,
+        customerId,
+      });
+      
+      res.json(inquiry);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("Create inquiry error:", error);
+      res.status(500).json({ error: "Failed to create inquiry" });
+    }
+  });
+
+  // Get customer's inquiries
+  app.get("/api/customer/inquiries", requireCustomerAuth, async (req, res) => {
+    try {
+      const customerId = req.session.customerId!;
+      const inquiries = await db.getCustomerInquiries(customerId);
+      res.json(inquiries);
+    } catch (error) {
+      console.error("Get customer inquiries error:", error);
+      res.status(500).json({ error: "Failed to fetch inquiries" });
+    }
+  });
+
+  // Get driver's inquiries
+  app.get("/api/driver/inquiries", requireDriverAuth, async (req, res) => {
+    try {
+      const driverId = req.session.driverId!;
+      const inquiries = await db.getDriverInquiries(driverId);
+      res.json(inquiries);
+    } catch (error) {
+      console.error("Get driver inquiries error:", error);
+      res.status(500).json({ error: "Failed to fetch inquiries" });
+    }
+  });
+
+  // Update inquiry status
+  app.patch("/api/inquiries/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.updateInquiry(id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Update inquiry error:", error);
+      res.status(500).json({ error: "Failed to update inquiry" });
+    }
+  });
+
+  // ===== MESSAGING ENDPOINTS =====
+  
+  // Send message
+  app.post("/api/messages", async (req, res) => {
+    try {
+      const { insertMessageSchema } = await import("@shared/schema");
+      const messageData = insertMessageSchema.parse(req.body);
+      
+      const message = await db.createMessage(messageData);
+      res.json(message);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("Send message error:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  // Get user's messages
+  app.get("/api/messages", async (req, res) => {
+    try {
+      const userId = req.session.customerId || req.session.driverId;
+      const userType = req.session.customerId ? "customer" : "driver";
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const messages = await db.getMessages(userId, userType);
+      res.json(messages);
+    } catch (error) {
+      console.error("Get messages error:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  // Get conversation between two users
+  app.get("/api/messages/conversation/:userId", async (req, res) => {
+    try {
+      const currentUserId = req.session.customerId || req.session.driverId;
+      const { userId } = req.params;
+      
+      if (!currentUserId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const messages = await db.getConversation(currentUserId, userId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Get conversation error:", error);
+      res.status(500).json({ error: "Failed to fetch conversation" });
+    }
+  });
+
+  // Mark message as read
+  app.patch("/api/messages/:id/read", async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.markMessageAsRead(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Mark message read error:", error);
+      res.status(500).json({ error: "Failed to mark message as read" });
+    }
+  });
+
+  // ===== SUPPORT TICKET ENDPOINTS =====
+  
+  // Create support ticket
+  app.post("/api/support/tickets", async (req, res) => {
+    try {
+      const userId = req.session.customerId || req.session.driverId;
+      const { insertSupportTicketSchema } = await import("@shared/schema");
+      const ticketData = insertSupportTicketSchema.parse(req.body);
+      
+      const ticket = await db.createSupportTicket({
+        ...ticketData,
+        userId: userId || "",
+      });
+      
+      res.json(ticket);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("Create support ticket error:", error);
+      res.status(500).json({ error: "Failed to create support ticket" });
+    }
+  });
+
+  // Get user's support tickets
+  app.get("/api/support/tickets", async (req, res) => {
+    try {
+      const userId = req.session.customerId || req.session.driverId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const tickets = await db.getUserSupportTickets(userId);
+      res.json(tickets);
+    } catch (error) {
+      console.error("Get support tickets error:", error);
+      res.status(500).json({ error: "Failed to fetch support tickets" });
+    }
+  });
+
+  // Get all support tickets (admin)
+  app.get("/api/admin/support/tickets", requireAdminAuth, async (req, res) => {
+    try {
+      const tickets = await db.getSupportTickets();
+      res.json(tickets);
+    } catch (error) {
+      console.error("Get all support tickets error:", error);
+      res.status(500).json({ error: "Failed to fetch support tickets" });
+    }
+  });
+
+  // Update support ticket (admin)
+  app.patch("/api/admin/support/tickets/:id", requireAdminAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.updateSupportTicket(id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Update support ticket error:", error);
+      res.status(500).json({ error: "Failed to update support ticket" });
+    }
+  });
+
+  // ===== DRIVER SCHEDULE ENDPOINTS =====
+  
+  // Get driver's schedules
+  app.get("/api/driver/schedules", requireDriverAuth, async (req, res) => {
+    try {
+      const driverId = req.session.driverId!;
+      const schedules = await db.getDriverSchedules(driverId);
+      res.json(schedules);
+    } catch (error) {
+      console.error("Get driver schedules error:", error);
+      res.status(500).json({ error: "Failed to fetch schedules" });
+    }
+  });
+
+  // Create driver schedule
+  app.post("/api/driver/schedules", requireDriverAuth, async (req, res) => {
+    try {
+      const driverId = req.session.driverId!;
+      const { insertDriverScheduleSchema } = await import("@shared/schema");
+      const scheduleData = insertDriverScheduleSchema.parse(req.body);
+      
+      const schedule = await db.createDriverSchedule({
+        ...scheduleData,
+        driverId,
+      });
+      
+      res.json(schedule);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors[0].message });
+      }
+      console.error("Create schedule error:", error);
+      res.status(500).json({ error: "Failed to create schedule" });
+    }
+  });
+
+  // Update driver schedule
+  app.patch("/api/driver/schedules/:id", requireDriverAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.updateDriverSchedule(id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Update schedule error:", error);
+      res.status(500).json({ error: "Failed to update schedule" });
+    }
+  });
+
+  // Delete driver schedule
+  app.delete("/api/driver/schedules/:id", requireDriverAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.deleteDriverSchedule(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete schedule error:", error);
+      res.status(500).json({ error: "Failed to delete schedule" });
+    }
+  });
+
   return httpServer;
 }

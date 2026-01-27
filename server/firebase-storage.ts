@@ -6,6 +6,11 @@ import {
   type Admin, type InsertAdmin,
   type AuditLog, type InsertAuditLog,
   type DriverVerificationStatus,
+  type DriverVehicle, type InsertDriverVehicle,
+  type Inquiry, type InsertInquiry,
+  type Message, type InsertMessage,
+  type SupportTicket, type InsertSupportTicket,
+  type DriverSchedule, type InsertDriverSchedule,
 } from "@shared/schema";
 import { firestore, COLLECTIONS, generateId, toDate, toTimestamp } from "./firebase-db";
 import type { IStorage, OtpRecord } from "./storage";
@@ -862,6 +867,316 @@ export class FirebaseStorage implements IStorage {
       id,
       ...auditLog,
     };
+  }
+
+  // Driver Vehicles methods
+  async createDriverVehicle(vehicle: InsertDriverVehicle & { driverId: string }): Promise<DriverVehicle> {
+    const id = generateId();
+    const vehicleData = {
+      id,
+      driverId: vehicle.driverId,
+      vehicleType: vehicle.vehicleType,
+      vehicleModel: vehicle.vehicleModel,
+      vehicleNumber: vehicle.vehicleNumber,
+      rcImage: vehicle.rcImage || null,
+      insuranceImage: vehicle.insuranceImage || null,
+      seatingCapacity: vehicle.seatingCapacity,
+      isActive: 1,
+      createdAt: new Date(),
+    };
+
+    await firestore.collection(COLLECTIONS.DRIVER_VEHICLES).doc(id).set(vehicleData);
+    return vehicleData;
+  }
+
+  async getDriverVehicles(driverId: string): Promise<DriverVehicle[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.DRIVER_VEHICLES)
+      .where("driverId", "==", driverId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as DriverVehicle;
+    });
+  }
+
+  async getDriverVehicle(id: string): Promise<DriverVehicle | undefined> {
+    const doc = await firestore.collection(COLLECTIONS.DRIVER_VEHICLES).doc(id).get();
+    if (!doc.exists) return undefined;
+    const data = doc.data()!;
+    return {
+      ...data,
+      createdAt: toDate(data.createdAt),
+    } as DriverVehicle;
+  }
+
+  async updateDriverVehicle(id: string, updates: Partial<DriverVehicle>): Promise<void> {
+    await firestore.collection(COLLECTIONS.DRIVER_VEHICLES).doc(id).update(updates);
+  }
+
+  async deleteDriverVehicle(id: string): Promise<void> {
+    await firestore.collection(COLLECTIONS.DRIVER_VEHICLES).doc(id).delete();
+  }
+
+  // Inquiry methods
+  async createInquiry(inquiry: InsertInquiry & { customerId?: string }): Promise<Inquiry> {
+    const id = generateId();
+    const inquiryData = {
+      id,
+      customerId: inquiry.customerId || "",
+      customerName: inquiry.customerName,
+      customerPhone: inquiry.customerPhone,
+      vehicleId: inquiry.vehicleId || null,
+      driverId: inquiry.driverId || null,
+      origin: inquiry.origin,
+      destination: inquiry.destination,
+      vehicleType: inquiry.vehicleType || null,
+      travelDate: inquiry.travelDate || null,
+      passengers: inquiry.passengers || null,
+      message: inquiry.message || null,
+      status: "pending",
+      createdAt: new Date(),
+    };
+
+    await firestore.collection(COLLECTIONS.INQUIRIES).doc(id).set(inquiryData);
+    return inquiryData;
+  }
+
+  async getInquiries(): Promise<Inquiry[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.INQUIRIES)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as Inquiry;
+    });
+  }
+
+  async getDriverInquiries(driverId: string): Promise<Inquiry[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.INQUIRIES)
+      .where("driverId", "==", driverId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as Inquiry;
+    });
+  }
+
+  async getCustomerInquiries(customerId: string): Promise<Inquiry[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.INQUIRIES)
+      .where("customerId", "==", customerId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as Inquiry;
+    });
+  }
+
+  async updateInquiry(id: string, updates: Partial<Inquiry>): Promise<void> {
+    await firestore.collection(COLLECTIONS.INQUIRIES).doc(id).update(updates);
+  }
+
+  // Message methods
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const id = generateId();
+    const messageData = {
+      id,
+      senderId: message.senderId,
+      senderType: message.senderType,
+      receiverId: message.receiverId,
+      receiverType: message.receiverType,
+      bookingId: message.bookingId || null,
+      message: message.message,
+      isRead: 0,
+      createdAt: new Date(),
+    };
+
+    await firestore.collection(COLLECTIONS.MESSAGES).doc(id).set(messageData);
+    return messageData;
+  }
+
+  async getMessages(userId: string, userType: string): Promise<Message[]> {
+    const sentSnapshot = await firestore
+      .collection(COLLECTIONS.MESSAGES)
+      .where("senderId", "==", userId)
+      .where("senderType", "==", userType)
+      .get();
+
+    const receivedSnapshot = await firestore
+      .collection(COLLECTIONS.MESSAGES)
+      .where("receiverId", "==", userId)
+      .where("receiverType", "==", userType)
+      .get();
+
+    const allMessages = [
+      ...sentSnapshot.docs.map((doc) => doc.data()),
+      ...receivedSnapshot.docs.map((doc) => doc.data()),
+    ];
+
+    return allMessages
+      .map((data) => ({
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as Message))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getConversation(user1Id: string, user2Id: string): Promise<Message[]> {
+    const snapshot1 = await firestore
+      .collection(COLLECTIONS.MESSAGES)
+      .where("senderId", "==", user1Id)
+      .where("receiverId", "==", user2Id)
+      .get();
+
+    const snapshot2 = await firestore
+      .collection(COLLECTIONS.MESSAGES)
+      .where("senderId", "==", user2Id)
+      .where("receiverId", "==", user1Id)
+      .get();
+
+    const allMessages = [
+      ...snapshot1.docs.map((doc) => doc.data()),
+      ...snapshot2.docs.map((doc) => doc.data()),
+    ];
+
+    return allMessages
+      .map((data) => ({
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as Message))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async markMessageAsRead(id: string): Promise<void> {
+    await firestore.collection(COLLECTIONS.MESSAGES).doc(id).update({ isRead: 1 });
+  }
+
+  // Support Ticket methods
+  async createSupportTicket(ticket: InsertSupportTicket & { userId?: string }): Promise<SupportTicket> {
+    const id = generateId();
+    const now = new Date();
+    const ticketData = {
+      id,
+      userId: ticket.userId || "",
+      userType: ticket.userType,
+      userName: ticket.userName,
+      userPhone: ticket.userPhone,
+      userEmail: ticket.userEmail || null,
+      subject: ticket.subject,
+      category: ticket.category,
+      description: ticket.description,
+      priority: ticket.priority || "medium",
+      status: "open",
+      adminResponse: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await firestore.collection(COLLECTIONS.SUPPORT_TICKETS).doc(id).set(ticketData);
+    return ticketData;
+  }
+
+  async getSupportTickets(): Promise<SupportTicket[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.SUPPORT_TICKETS)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+        updatedAt: toDate(data.updatedAt),
+      } as SupportTicket;
+    });
+  }
+
+  async getUserSupportTickets(userId: string): Promise<SupportTicket[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.SUPPORT_TICKETS)
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+        updatedAt: toDate(data.updatedAt),
+      } as SupportTicket;
+    });
+  }
+
+  async updateSupportTicket(id: string, updates: Partial<SupportTicket>): Promise<void> {
+    await firestore.collection(COLLECTIONS.SUPPORT_TICKETS).doc(id).update({
+      ...updates,
+      updatedAt: new Date(),
+    });
+  }
+
+  // Driver Schedule methods
+  async createDriverSchedule(schedule: InsertDriverSchedule): Promise<DriverSchedule> {
+    const id = generateId();
+    const scheduleData = {
+      id,
+      driverId: schedule.driverId,
+      vehicleId: schedule.vehicleId,
+      dayOfWeek: schedule.dayOfWeek,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      isAvailable: 1,
+      createdAt: new Date(),
+    };
+
+    await firestore.collection(COLLECTIONS.DRIVER_SCHEDULES).doc(id).set(scheduleData);
+    return scheduleData;
+  }
+
+  async getDriverSchedules(driverId: string): Promise<DriverSchedule[]> {
+    const snapshot = await firestore
+      .collection(COLLECTIONS.DRIVER_SCHEDULES)
+      .where("driverId", "==", driverId)
+      .get();
+
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: toDate(data.createdAt),
+      } as DriverSchedule;
+    });
+  }
+
+  async updateDriverSchedule(id: string, updates: Partial<DriverSchedule>): Promise<void> {
+    await firestore.collection(COLLECTIONS.DRIVER_SCHEDULES).doc(id).update(updates);
+  }
+
+  async deleteDriverSchedule(id: string): Promise<void> {
+    await firestore.collection(COLLECTIONS.DRIVER_SCHEDULES).doc(id).delete();
   }
 }
 

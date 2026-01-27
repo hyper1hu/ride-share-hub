@@ -1,26 +1,27 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2, Bus, Bike, Truck, IndianRupee, Shield, Star, Map } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Car, Users, Phone, Search, ArrowRight, Loader2, Bus, Truck, IndianRupee, Shield, Star, Map, MessageSquare, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BookingDialog } from "@/components/booking-dialog";
+import { InquiryDialog } from "@/components/inquiry-dialog";
 import { LocationInput } from "@/components/location-input";
 import { RouteMap } from "@/components/route-map";
 import type { Car as CarType } from "@shared/schema";
 
 const vehicleTypeLabels: Record<string, string> = {
   car: "Car", suv: "SUV", van: "Van", bus: "Bus", minibus: "Minibus",
-  motorcycle: "Motorcycle", auto_rickshaw: "Auto", truck: "Truck",
+  auto_rickshaw: "Auto", truck: "Truck", sedan: "Sedan", hatchback: "Hatchback",
+  muv: "MUV", luxury_sedan: "Luxury Sedan", mini_van: "Mini Van",
 };
 
 const getVehicleIcon = (type: string) => {
   switch (type) {
-    case "bus": case "minibus": return Bus;
-    case "motorcycle": return Bike;
-    case "truck": return Truck;
+    case "bus": case "minibus": case "sleeper_bus": case "ac_bus": case "non_ac_bus": case "school_bus": return Bus;
+    case "truck": case "mini_truck": case "heavy_truck": case "container_truck": case "pickup_truck": case "tata_ace": return Truck;
     default: return Car;
   }
 };
@@ -30,6 +31,7 @@ export default function Customer() {
   const [searchDestination, setSearchDestination] = useState("");
   const [selectedCar, setSelectedCar] = useState<CarType | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [inquiryOpen, setInquiryOpen] = useState(false);
 
   const searchParams = new URLSearchParams();
   if (searchOrigin) searchParams.set("origin", searchOrigin);
@@ -50,6 +52,15 @@ export default function Customer() {
     setBookingOpen(true);
   };
 
+  const handleInquiryClick = (car: CarType) => {
+    setSelectedCar(car);
+    setInquiryOpen(true);
+  };
+
+  const handleCallDriver = (phone: string) => {
+    window.location.href = `tel:${phone}`;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
@@ -68,7 +79,14 @@ export default function Customer() {
               <p className="text-xs text-muted-foreground hidden sm:block">Book a comfortable journey</p>
             </div>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Link href="/help">
+              <Button variant="ghost" size="icon" title="Help & Support">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -229,8 +247,8 @@ export default function Customer() {
                             </div>
                           </div>
                           
-                          <div className="flex flex-row lg:flex-col items-center lg:items-end gap-4 lg:gap-3 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/50 lg:pl-4">
-                            <div className="flex-1 lg:text-right">
+                          <div className="flex flex-col items-stretch gap-3 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/50 lg:pl-4 lg:min-w-[200px]">
+                            <div className="lg:text-right">
                               <div className="flex items-center gap-2 lg:justify-end">
                                 <Badge variant="outline" className="text-xs">One Way</Badge>
                                 <span className="font-bold text-xl text-primary">₹{car.fare}</span>
@@ -240,7 +258,29 @@ export default function Customer() {
                                 <span className="font-medium text-muted-foreground">₹{car.fare + car.returnFare}</span>
                               </div>
                             </div>
-                            <Button onClick={() => handleBookClick(car)} className="whitespace-nowrap" data-testid={`button-book-${car.id}`}>
+                            <div className="flex gap-2">
+                              <Button 
+                                onClick={() => handleCallDriver(car.driverPhone)} 
+                                variant="outline" 
+                                size="sm"
+                                className="flex-1 gap-1"
+                                title="Call Driver"
+                              >
+                                <Phone className="h-3 w-3" />
+                                Call
+                              </Button>
+                              <Button 
+                                onClick={() => handleInquiryClick(car)} 
+                                variant="outline" 
+                                size="sm"
+                                className="flex-1 gap-1"
+                                title="Send Inquiry"
+                              >
+                                <MessageSquare className="h-3 w-3" />
+                                Inquiry
+                              </Button>
+                            </div>
+                            <Button onClick={() => handleBookClick(car)} className="w-full" data-testid={`button-book-${car.id}`}>
                               Book Now
                             </Button>
                           </div>
@@ -256,6 +296,7 @@ export default function Customer() {
       </main>
 
       <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} car={selectedCar} />
+      <InquiryDialog open={inquiryOpen} onOpenChange={setInquiryOpen} car={selectedCar} />
     </div>
   );
 }

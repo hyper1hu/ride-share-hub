@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ArrowLeft, Car, Plus, MapPin, Clock, Users, Phone, Trash2, Loader2, Bus, Bike, Truck, ArrowRight, IndianRupee, Calendar } from "lucide-react";
+import { ArrowLeft, Car, Plus, MapPin, Clock, Users, Phone, Trash2, Loader2, Bus, Truck, ArrowRight, IndianRupee, Calendar, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AddCarDialog } from "@/components/add-car-dialog";
+import { ManageVehiclesDialog } from "@/components/manage-vehicles-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Car as CarType, Booking } from "@shared/schema";
@@ -14,20 +15,21 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const vehicleTypeLabels: Record<string, string> = {
   car: "Car", suv: "SUV", van: "Van", bus: "Bus", minibus: "Minibus",
-  motorcycle: "Motorcycle", auto_rickshaw: "Auto", truck: "Truck",
+  auto_rickshaw: "Auto", truck: "Truck", sedan: "Sedan", hatchback: "Hatchback",
+  muv: "MUV", luxury_sedan: "Luxury Sedan", mini_van: "Mini Van",
 };
 
 const getVehicleIcon = (type: string) => {
   switch (type) {
-    case "bus": case "minibus": return Bus;
-    case "motorcycle": return Bike;
-    case "truck": return Truck;
+    case "bus": case "minibus": case "sleeper_bus": case "ac_bus": case "non_ac_bus": case "school_bus": return Bus;
+    case "truck": case "mini_truck": case "heavy_truck": case "container_truck": case "pickup_truck": case "tata_ace": return Truck;
     default: return Car;
   }
 };
 
 export default function Driver() {
   const [addCarOpen, setAddCarOpen] = useState(false);
+  const [manageVehiclesOpen, setManageVehiclesOpen] = useState(false);
   const [deleteCarId, setDeleteCarId] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -129,14 +131,20 @@ export default function Driver() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold">Your Vehicles</h2>
-            <p className="text-sm text-muted-foreground">Manage your vehicle listings</p>
+            <h2 className="text-xl font-bold">Your Ride Listings</h2>
+            <p className="text-sm text-muted-foreground">Manage your ride schedules</p>
           </div>
-          <Button onClick={() => setAddCarOpen(true)} className="gap-2" data-testid="button-add-car">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Vehicle</span>
-            <span className="sm:hidden">Add</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setManageVehiclesOpen(true)} variant="outline" className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Manage Vehicles</span>
+            </Button>
+            <Button onClick={() => setAddCarOpen(true)} className="gap-2" data-testid="button-add-car">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Ride</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -257,6 +265,7 @@ export default function Driver() {
       </main>
 
       <AddCarDialog open={addCarOpen} onOpenChange={setAddCarOpen} />
+      <ManageVehiclesDialog open={manageVehiclesOpen} onOpenChange={setManageVehiclesOpen} />
 
       <AlertDialog open={!!deleteCarId} onOpenChange={() => setDeleteCarId(null)}>
         <AlertDialogContent>

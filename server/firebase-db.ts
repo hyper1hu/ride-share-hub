@@ -52,6 +52,11 @@ export const COLLECTIONS = {
   OTPS: "otps",
   AUDIT_LOGS: "auditLogs",
   RATE_LIMITS: "rateLimits",
+  DRIVER_VEHICLES: "driverVehicles",
+  INQUIRIES: "inquiries",
+  MESSAGES: "messages",
+  SUPPORT_TICKETS: "supportTickets",
+  DRIVER_SCHEDULES: "driverSchedules",
 } as const;
 
 // Helper function to generate ID
