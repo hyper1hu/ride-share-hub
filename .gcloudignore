@@ -1,0 +1,57 @@
+# Google Cloud Build ignore file
+# Excludes files from being uploaded to Cloud Build
+
+# Node modules (will be installed during build)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Development files
+.git/
+.gitignore
+.env
+.env.*
+*.log
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Flutter app (not needed for backend deployment)
+flutter_rideshare/
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+__tests__/
+coverage/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts (will be rebuilt)
+dist/
+build/
+.cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Deployment files for other platforms
+render.yaml
+railway.json
+fly.toml
+vercel.json
