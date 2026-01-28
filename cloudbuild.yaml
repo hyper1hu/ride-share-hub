@@ -1,18 +1,18 @@
-# Google Cloud Build Configuration
-# Simple configuration without custom substitutions
+# Minimal Google Cloud Build Configuration
+# No custom substitutions - only valid built-in variables
 
 steps:
-  # Install dependencies
+  # Step 1: Install dependencies
   - name: 'node:22-alpine'
     entrypoint: npm
     args: ['ci']
     
-  # Build application
+  # Step 2: Build the application
   - name: 'node:22-alpine'
     entrypoint: npm
     args: ['run', 'build']
     
-  # Build Docker image
+  # Step 3: Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'build'
@@ -22,15 +22,15 @@ steps:
       - 'gcr.io/$PROJECT_ID/rideshare-hub:latest'
       - '.'
     
-  # Push Docker image
+  # Step 4: Push Docker image with commit SHA
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/rideshare-hub:$COMMIT_SHA']
     
-  # Push latest tag
+  # Step 5: Push Docker image with latest tag
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/rideshare-hub:latest']
     
-  # Deploy to Cloud Run
+  # Step 6: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -46,11 +46,14 @@ steps:
       - '--port=5000'
       - '--set-env-vars=NODE_ENV=production,PORT=5000'
 
+# Images to be pushed to Container Registry
 images:
   - 'gcr.io/$PROJECT_ID/rideshare-hub:$COMMIT_SHA'
   - 'gcr.io/$PROJECT_ID/rideshare-hub:latest'
 
+# Build options
 options:
   machineType: 'E2_HIGHCPU_8'
   
+# Timeout for the entire build
 timeout: '1200s'
