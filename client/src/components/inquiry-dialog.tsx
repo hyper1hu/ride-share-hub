@@ -13,7 +13,7 @@ import type { Car } from "@shared/schema";
 interface InquiryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  car?: Car;
+  car?: Car | null;
 }
 
 export function InquiryDialog({ open, onOpenChange, car }: InquiryDialogProps) {

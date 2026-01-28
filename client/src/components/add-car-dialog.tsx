@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { insertCarSchema, vehicleTypes, type InsertCar } from "@shared/schema";
+import { insertCarSchema, vehicleTypes, vehicleTypeLabels, type InsertCar } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { westBengalLocations, searchLocations } from "@/lib/locations";
 
@@ -20,16 +20,6 @@ interface AddCarDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const vehicleTypeLabels: Record<string, string> = {
-  car: "Car",
-  suv: "SUV",
-  van: "Van",
-  bus: "Bus",
-  minibus: "Minibus",
-  motorcycle: "Motorcycle",
-  auto_rickshaw: "Auto Rickshaw",
-  truck: "Truck",
-};
 
 function LocationField({ value, onChange, label, placeholder, testId, variant = "default" }: { 
   value: string; 
@@ -122,7 +112,21 @@ export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
 
   const form = useForm<InsertCar>({
     resolver: zodResolver(insertCarSchema),
-    defaultValues: { vehicleType: "car", driverName: "", driverPhone: "", carModel: "", carNumber: "", origin: "", destination: "", waypoints: [], fare: 0, returnFare: 0, departureTime: "", returnTime: "", seatsAvailable: 4 },
+    defaultValues: {
+      vehicleType: "sedan",
+      driverName: "",
+      driverPhone: "",
+      carModel: "",
+      carNumber: "",
+      origin: "",
+      destination: "",
+      waypoints: [],
+      fare: 0,
+      returnFare: 0,
+      departureTime: "",
+      returnTime: "",
+      seatsAvailable: 4
+    },
   });
 
   const addWaypoint = () => {

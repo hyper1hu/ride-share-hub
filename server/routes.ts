@@ -96,7 +96,7 @@ async function initializeSampleData(): Promise<void> {
       const sampleVehicles = [
         {
           driverId: createdDrivers[0].id,
-          vehicleType: "car" as const,
+          vehicleType: "sedan" as const,
           driverName: "Rajesh Kumar",
           driverPhone: "9876543210",
           carModel: "Maruti Suzuki Swift Dzire",
@@ -176,10 +176,10 @@ async function initializeSampleData(): Promise<void> {
         },
         {
           driverId: createdDrivers[4].id,
-          vehicleType: "motorcycle" as const,
+          vehicleType: "hatchback" as const,
           driverName: "Pradeep Mukherjee",
           driverPhone: "9876543214",
-          carModel: "Royal Enfield Classic 350",
+          carModel: "Hyundai i20",
           carNumber: "WB06KL1234",
           origin: "Jadavpur",
           destination: "Diamond Harbour",
@@ -188,7 +188,7 @@ async function initializeSampleData(): Promise<void> {
           returnFare: 450,
           departureTime: "09:00",
           returnTime: "15:00",
-          seatsAvailable: 1,
+          seatsAvailable: 4,
         },
         {
           driverId: createdDrivers[4].id,
@@ -208,10 +208,10 @@ async function initializeSampleData(): Promise<void> {
         },
         {
           driverId: createdDrivers[1].id,
-          vehicleType: "truck" as const,
+          vehicleType: "mini_truck" as const,
           driverName: "Sunil Das",
           driverPhone: "9876543211",
-          carModel: "Tata 407",
+          carModel: "Tata Ace",
           carNumber: "WB08OP9012",
           origin: "Kolkata Port",
           destination: "Haldia",
@@ -1006,14 +1006,14 @@ export async function registerRoutes(
   // Update vehicle
   app.patch("/api/driver/vehicles/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const driverId = req.session.driverId!;
-      
+
       const vehicle = await db.getDriverVehicle(id);
       if (!vehicle || vehicle.driverId !== driverId) {
         return res.status(404).json({ error: "Vehicle not found" });
       }
-      
+
       await db.updateDriverVehicle(id, req.body);
       res.json({ success: true });
     } catch (error) {
@@ -1025,14 +1025,14 @@ export async function registerRoutes(
   // Delete vehicle
   app.delete("/api/driver/vehicles/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const driverId = req.session.driverId!;
-      
+
       const vehicle = await db.getDriverVehicle(id);
       if (!vehicle || vehicle.driverId !== driverId) {
         return res.status(404).json({ error: "Vehicle not found" });
       }
-      
+
       await db.deleteDriverVehicle(id);
       res.json({ success: true });
     } catch (error) {
@@ -1223,7 +1223,7 @@ export async function registerRoutes(
   // Update support ticket (admin)
   app.patch("/api/admin/support/tickets/:id", requireAdminAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       await db.updateSupportTicket(id, req.body);
       res.json({ success: true });
     } catch (error) {
@@ -1271,7 +1271,7 @@ export async function registerRoutes(
   // Update driver schedule
   app.patch("/api/driver/schedules/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       await db.updateDriverSchedule(id, req.body);
       res.json({ success: true });
     } catch (error) {
@@ -1283,7 +1283,7 @@ export async function registerRoutes(
   // Delete driver schedule
   app.delete("/api/driver/schedules/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       await db.deleteDriverSchedule(id);
       res.json({ success: true });
     } catch (error) {

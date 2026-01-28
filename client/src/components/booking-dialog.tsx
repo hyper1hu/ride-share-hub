@@ -20,7 +20,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 interface BookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  car: CarType | null;
+  car: CarType | null | undefined;
 }
 
 const bookingFormSchema = insertBookingSchema.extend({ seatsBooked: z.number().min(1, "Select at least 1 seat") });

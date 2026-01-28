@@ -235,9 +235,3 @@ export const insertRateLimitSchema = z.object({
 });
 
 export type InsertRateLimit = z.infer<typeof insertRateLimitSchema>;
-
-// Re-export for compatibility
-export {
-  vehicleTypes as vehicleTypes,
-  driverVerificationStatus as driverVerificationStatus,
-};
