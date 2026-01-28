@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-// Vehicle types remain the same
-export const vehicleTypes = ["car", "suv", "van", "bus", "minibus", "motorcycle", "auto_rickshaw", "truck"] as const;
-export type VehicleType = typeof vehicleTypes[number];
+// Vehicle types for Firebase (simplified list)
+const firebaseVehicleTypes = ["car", "suv", "van", "bus", "minibus", "motorcycle", "auto_rickshaw", "truck"] as const;
+export type FirebaseVehicleType = typeof firebaseVehicleTypes[number];
 
-// Driver verification status
-export const driverVerificationStatus = ["pending", "approved", "rejected"] as const;
-export type DriverVerificationStatus = typeof driverVerificationStatus[number];
+// Driver verification status for Firebase
+const firebaseDriverVerificationStatus = ["pending", "approved", "rejected"] as const;
+export type FirebaseDriverVerificationStatus = typeof firebaseDriverVerificationStatus[number];
 
 // Customer type (Firestore compatible)
 export interface Customer {
@@ -77,7 +77,7 @@ export interface Car {
 
 export const insertCarSchema = z.object({
   driverId: z.string().optional(),
-  vehicleType: z.enum(vehicleTypes),
+  vehicleType: z.enum(firebaseVehicleTypes),
   driverName: z.string().min(2, "Driver name must be at least 2 characters"),
   driverPhone: z.string().min(10, "Phone number must be at least 10 digits"),
   carModel: z.string().min(2, "Vehicle model is required"),
@@ -235,9 +235,3 @@ export const insertRateLimitSchema = z.object({
 });
 
 export type InsertRateLimit = z.infer<typeof insertRateLimitSchema>;
-
-// Re-export for compatibility
-export {
-  vehicleTypes as vehicleTypes,
-  driverVerificationStatus as driverVerificationStatus,
-};

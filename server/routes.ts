@@ -96,7 +96,7 @@ async function initializeSampleData(): Promise<void> {
       const sampleVehicles = [
         {
           driverId: createdDrivers[0].id,
-          vehicleType: "car" as const,
+          vehicleType: "sedan" as const,
           driverName: "Rajesh Kumar",
           driverPhone: "9876543210",
           carModel: "Maruti Suzuki Swift Dzire",
@@ -176,10 +176,10 @@ async function initializeSampleData(): Promise<void> {
         },
         {
           driverId: createdDrivers[4].id,
-          vehicleType: "motorcycle" as const,
+          vehicleType: "hatchback" as const,
           driverName: "Pradeep Mukherjee",
           driverPhone: "9876543214",
-          carModel: "Royal Enfield Classic 350",
+          carModel: "Maruti Alto",
           carNumber: "WB06KL1234",
           origin: "Jadavpur",
           destination: "Diamond Harbour",
@@ -188,7 +188,7 @@ async function initializeSampleData(): Promise<void> {
           returnFare: 450,
           departureTime: "09:00",
           returnTime: "15:00",
-          seatsAvailable: 1,
+          seatsAvailable: 4,
         },
         {
           driverId: createdDrivers[4].id,
@@ -603,9 +603,9 @@ export async function registerRoutes(
 
   app.get("/api/drivers", async (req, res) => {
     try {
-      const status = req.query.status as string | undefined;
+      const status = Array.isArray(req.query.status) ? req.query.status[0] : req.query.status;
       let drivers;
-      if (status && ["pending", "approved", "rejected"].includes(status)) {
+      if (status && typeof status === 'string' && ["pending", "approved", "rejected"].includes(status)) {
         drivers = await db.getDriversByStatus(status as any);
       } else {
         drivers = await db.getDrivers();
@@ -908,8 +908,10 @@ export async function registerRoutes(
   app.get("/api/locations/search", async (req, res) => {
     try {
       const { searchLocations } = await import("./data/indian-locations");
-      const query = req.query.q as string || "";
-      const limit = parseInt(req.query.limit as string) || 20;
+      const queryParam = Array.isArray(req.query.q) ? req.query.q[0] : req.query.q;
+      const limitParam = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
+      const query = typeof queryParam === 'string' ? queryParam : "";
+      const limit = parseInt(limitParam as string) || 20;
       const results = searchLocations(query, limit);
       res.json(results);
     } catch (error) {
@@ -921,7 +923,8 @@ export async function registerRoutes(
   app.get("/api/locations/popular", async (req, res) => {
     try {
       const { getPopularLocations } = await import("./data/indian-locations");
-      const limit = parseInt(req.query.limit as string) || 50;
+      const limitParam = Array.isArray(req.query.limit) ? req.query.limit[0] : req.query.limit;
+      const limit = parseInt(limitParam as string) || 50;
       const results = getPopularLocations(limit);
       res.json(results);
     } catch (error) {
@@ -933,7 +936,7 @@ export async function registerRoutes(
   app.get("/api/locations/state/:state", async (req, res) => {
     try {
       const { getLocationsByState } = await import("./data/indian-locations");
-      const state = req.params.state;
+      const state = Array.isArray(req.params.state) ? req.params.state[0] : req.params.state;
       const results = getLocationsByState(state);
       res.json(results);
     } catch (error) {
@@ -1006,14 +1009,14 @@ export async function registerRoutes(
   // Update vehicle
   app.patch("/api/driver/vehicles/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const driverId = req.session.driverId!;
-      
+
       const vehicle = await db.getDriverVehicle(id);
       if (!vehicle || vehicle.driverId !== driverId) {
         return res.status(404).json({ error: "Vehicle not found" });
       }
-      
+
       await db.updateDriverVehicle(id, req.body);
       res.json({ success: true });
     } catch (error) {
@@ -1025,14 +1028,14 @@ export async function registerRoutes(
   // Delete vehicle
   app.delete("/api/driver/vehicles/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const driverId = req.session.driverId!;
-      
+
       const vehicle = await db.getDriverVehicle(id);
       if (!vehicle || vehicle.driverId !== driverId) {
         return res.status(404).json({ error: "Vehicle not found" });
       }
-      
+
       await db.deleteDriverVehicle(id);
       res.json({ success: true });
     } catch (error) {
@@ -1223,7 +1226,7 @@ export async function registerRoutes(
   // Update support ticket (admin)
   app.patch("/api/admin/support/tickets/:id", requireAdminAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       await db.updateSupportTicket(id, req.body);
       res.json({ success: true });
     } catch (error) {
@@ -1271,7 +1274,7 @@ export async function registerRoutes(
   // Update driver schedule
   app.patch("/api/driver/schedules/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       await db.updateDriverSchedule(id, req.body);
       res.json({ success: true });
     } catch (error) {
@@ -1283,7 +1286,7 @@ export async function registerRoutes(
   // Delete driver schedule
   app.delete("/api/driver/schedules/:id", requireDriverAuth, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       await db.deleteDriverSchedule(id);
       res.json({ success: true });
     } catch (error) {

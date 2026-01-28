@@ -21,14 +21,28 @@ interface AddCarDialogProps {
 }
 
 const vehicleTypeLabels: Record<string, string> = {
-  car: "Car",
+  sedan: "Sedan",
+  hatchback: "Hatchback",
   suv: "SUV",
+  muv: "MUV",
+  luxury_sedan: "Luxury Sedan",
   van: "Van",
+  mini_van: "Mini Van",
   bus: "Bus",
-  minibus: "Minibus",
-  motorcycle: "Motorcycle",
+  minibus: "Mini Bus",
+  sleeper_bus: "Sleeper Bus",
+  ac_bus: "AC Bus",
+  non_ac_bus: "Non-AC Bus",
   auto_rickshaw: "Auto Rickshaw",
+  tempo: "Tempo",
+  mini_truck: "Mini Truck",
   truck: "Truck",
+  heavy_truck: "Heavy Truck",
+  container_truck: "Container Truck",
+  pickup_truck: "Pickup Truck",
+  tata_ace: "Tata Ace",
+  ambulance: "Ambulance",
+  school_bus: "School Bus"
 };
 
 function LocationField({ value, onChange, label, placeholder, testId, variant = "default" }: { 
@@ -122,7 +136,7 @@ export function AddCarDialog({ open, onOpenChange }: AddCarDialogProps) {
 
   const form = useForm<InsertCar>({
     resolver: zodResolver(insertCarSchema),
-    defaultValues: { vehicleType: "car", driverName: "", driverPhone: "", carModel: "", carNumber: "", origin: "", destination: "", waypoints: [], fare: 0, returnFare: 0, departureTime: "", returnTime: "", seatsAvailable: 4 },
+    defaultValues: { vehicleType: "sedan", driverName: "", driverPhone: "", carModel: "", carNumber: "", origin: "", destination: "", waypoints: [], fare: 0, returnFare: 0, departureTime: "", returnTime: "", seatsAvailable: 4 },
   });
 
   const addWaypoint = () => {

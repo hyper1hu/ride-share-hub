@@ -29,7 +29,7 @@ const getVehicleIcon = (type: string) => {
 export default function Customer() {
   const [searchOrigin, setSearchOrigin] = useState("");
   const [searchDestination, setSearchDestination] = useState("");
-  const [selectedCar, setSelectedCar] = useState<CarType | null>(null);
+  const [selectedCar, setSelectedCar] = useState<CarType | undefined>(undefined);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [inquiryOpen, setInquiryOpen] = useState(false);
 
@@ -295,7 +295,7 @@ export default function Customer() {
         )}
       </main>
 
-      <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} car={selectedCar} />
+      <BookingDialog open={bookingOpen} onOpenChange={setBookingOpen} car={selectedCar ?? null} />
       <InquiryDialog open={inquiryOpen} onOpenChange={setInquiryOpen} car={selectedCar} />
     </div>
   );
