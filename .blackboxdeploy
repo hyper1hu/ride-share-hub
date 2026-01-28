@@ -1,0 +1,30 @@
+{
+  "name": "rideshare-hub",
+  "region": "us-central1",
+  "build": {
+    "install": "npm ci",
+    "build": "npm run build",
+    "output": "dist"
+  },
+  "runtime": {
+    "type": "nodejs",
+    "version": "22"
+  },
+  "server": {
+    "start": "node dist/index.cjs",
+    "port": 5000
+  },
+  "resources": {
+    "cpu": 2,
+    "memory": 512
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "PORT": "5000"
+  },
+  "health": {
+    "path": "/api/health",
+    "interval": 30,
+    "timeout": 4
+  }
+}

@@ -324,7 +324,7 @@
     "check": "node test-setup.js",
     "dev": "set NODE_ENV=development&& tsx server/index.ts",
     "build": "tsx script/build.ts",
-    "start": "node dist/index.js",
+    "start": "node dist/index.cjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
