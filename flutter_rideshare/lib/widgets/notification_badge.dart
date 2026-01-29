@@ -27,7 +27,7 @@ class NotificationBadge extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: backgroundColor ?? Theme.of(context).primaryColor.withOpacity(0.1),
+              color: backgroundColor ?? Theme.of(context).primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -52,7 +52,7 @@ class NotificationBadge extends StatelessWidget {
                   border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -104,12 +104,12 @@ class NotificationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isRead
             ? Theme.of(context).cardColor
-            : Theme.of(context).primaryColor.withOpacity(0.05),
+            : Theme.of(context).primaryColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isRead
               ? Colors.transparent
-              : Theme.of(context).primaryColor.withOpacity(0.1),
+              : Theme.of(context).primaryColor.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -128,7 +128,7 @@ class NotificationCard extends StatelessWidget {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: (iconColor ?? Theme.of(context).primaryColor)
-                          .withOpacity(0.15),
+                          .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -184,7 +184,7 @@ class NotificationCard extends StatelessWidget {
                               .textTheme
                               .bodySmall
                               ?.color
-                              ?.withOpacity(0.7),
+                              ?.withValues(alpha: 0.7),
                           fontSize: 11,
                         ),
                       ),

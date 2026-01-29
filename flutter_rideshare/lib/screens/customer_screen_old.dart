@@ -137,14 +137,14 @@ class _CustomerScreenState extends State<CustomerScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.search_off, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                            Icon(Icons.search_off, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
                             const SizedBox(height: 16),
                             Text(_hasSearched ? 'No rides available' : 'Search for rides',
                                 style: theme.textTheme.titleLarge),
                             const SizedBox(height: 8),
                             Text(
                               _hasSearched ? 'Try different locations' : 'Enter pickup and drop locations',
-                              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                             ),
                           ],
                         ),
@@ -244,7 +244,7 @@ class _CarCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Text(car.carNumber, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 12)),
+                      Text(car.carNumber, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 12)),
                     ],
                   ),
                 ),
@@ -310,7 +310,7 @@ class _CarCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text('₹${(car.fare + car.returnFare).toStringAsFixed(0)}',
-                            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7))),
+                            style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                       ],
                     ),
                   ],
@@ -350,9 +350,9 @@ class _InfoChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8), fontSize: 13)),
+        Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8), fontSize: 13)),
       ],
     );
   }
@@ -489,7 +489,7 @@ class _BookingSheetState extends State<_BookingSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withOpacity(0.2),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -498,7 +498,7 @@ class _BookingSheetState extends State<_BookingSheet> {
           Text('Book Your Ride', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text('${widget.car.origin} → ${widget.car.destination}',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.7))),
+              style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
           const SizedBox(height: 24),
           TextField(
             controller: _mobileController,
@@ -577,7 +577,7 @@ class _BookingSheetState extends State<_BookingSheet> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

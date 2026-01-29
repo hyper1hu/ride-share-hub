@@ -52,7 +52,7 @@ class CustomGradientButton extends StatelessWidget {
             : [
                 BoxShadow(
                   color: (gradientColors?.first ?? Theme.of(context).primaryColor)
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
@@ -136,7 +136,7 @@ class CustomIconButton extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: backgroundColor ?? Theme.of(context).primaryColor.withOpacity(0.1),
+            color: backgroundColor ?? Theme.of(context).primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Material(

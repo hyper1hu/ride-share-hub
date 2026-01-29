@@ -35,7 +35,7 @@ class StatsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: colors.first.withOpacity(0.3),
+            color: colors.first.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -57,7 +57,7 @@ class StatsCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -69,7 +69,7 @@ class StatsCard extends StatelessWidget {
                     if (onTap != null)
                       Icon(
                         Icons.arrow_forward_ios,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         size: 16,
                       ),
                   ],
@@ -88,7 +88,7 @@ class StatsCard extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -98,7 +98,7 @@ class StatsCard extends StatelessWidget {
                   Text(
                     subtitle!,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -130,7 +130,7 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? Theme.of(context).primaryColor.withOpacity(0.1);
+    final bgColor = backgroundColor ?? Theme.of(context).primaryColor.withValues(alpha: 0.1);
     final iColor = iconColor ?? Theme.of(context).primaryColor;
 
     return Container(
@@ -139,7 +139,7 @@ class InfoCard extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: iColor.withOpacity(0.2),
+          color: iColor.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -148,7 +148,7 @@ class InfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: iColor.withOpacity(0.15),
+              color: iColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -214,7 +214,7 @@ class ActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -233,7 +233,7 @@ class ActionCard extends StatelessWidget {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [cardColor, cardColor.withOpacity(0.7)],
+                      colors: [cardColor, cardColor.withValues(alpha: 0.7)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),

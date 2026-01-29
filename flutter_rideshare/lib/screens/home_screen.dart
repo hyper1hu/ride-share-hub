@@ -20,9 +20,9 @@ class HomeScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Theme.of(context).primaryColor.withOpacity(0.1),
-                  Theme.of(context).colorScheme.secondary.withOpacity(0.05),
-                  Theme.of(context).colorScheme.tertiary.withOpacity(0.08),
+                  Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  Theme.of(context).colorScheme.secondary.withValues(alpha: 0.05),
+                  Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.08),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -93,7 +93,7 @@ class HomeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -104,7 +104,7 @@ class HomeScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -136,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: const Text(
@@ -202,7 +202,7 @@ class HomeScreen extends StatelessWidget {
                               icon: Icons.location_city,
                               gradientColors: [
                                 Theme.of(context).colorScheme.tertiary,
-                                Theme.of(context).colorScheme.tertiary.withOpacity(0.7),
+                                Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.7),
                               ],
                               subtitle: 'Locations',
                             ),
@@ -212,7 +212,7 @@ class HomeScreen extends StatelessWidget {
                               icon: Icons.map,
                               gradientColors: [
                                 Theme.of(context).colorScheme.secondary,
-                                Theme.of(context).colorScheme.secondary.withOpacity(0.7),
+                                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.7),
                               ],
                               subtitle: 'All of WB',
                             ),
@@ -268,7 +268,7 @@ class HomeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -317,10 +317,10 @@ class HomeScreen extends StatelessWidget {
       builder: (context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -351,7 +351,7 @@ class HomeScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.15),
+                color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
