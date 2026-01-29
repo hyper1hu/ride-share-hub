@@ -64,6 +64,20 @@ async function comparePassword(password: string, hash: string): Promise<boolean>
 }
 
 async function initializeSampleData(): Promise<void> {
+  // In development, avoid touching Firestore unless credentials (or emulator)
+  // are configured. This keeps `npm run dev` usable out-of-the-box.
+  const hasFirestoreAuth =
+    Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) ||
+    Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS) ||
+    Boolean(process.env.FIRESTORE_EMULATOR_HOST);
+
+  if (!hasFirestoreAuth) {
+    console.warn(
+      "[INIT] Skipping sample data initialization (Firestore credentials not configured)",
+    );
+    return;
+  }
+
   try {
     const existingAdmin = await db.getAdminByUsername("admin");
     if (!existingAdmin) {

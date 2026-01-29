@@ -3,6 +3,18 @@ import admin from "firebase-admin";
 // Use the centralized Firebase initialization from firebase-db
 export function initializeFirebase() {
   try {
+    // Treat "no credentials" like development mode even if the app got initialized
+    // with only a projectId.
+    const hasFirestoreAuth =
+      Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) ||
+      Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS) ||
+      Boolean(process.env.FIRESTORE_EMULATOR_HOST);
+
+    if (!hasFirestoreAuth) {
+      console.log("[Firebase] Credentials not configured - using mock OTP for development");
+      return null;
+    }
+
     // Check if Firebase is already initialized by firebase-db.ts
     return admin.app();
   } catch (error) {

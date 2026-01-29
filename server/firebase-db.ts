@@ -11,7 +11,13 @@ try {
   firebaseApp = admin.app();
 } catch (error) {
   // Initialize Firebase with service account or default credentials
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+  const hasServiceAccountKey = Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+  const hasApplicationDefaultCreds =
+    Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS) ||
+    Boolean(process.env.FIRESTORE_EMULATOR_HOST);
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (hasServiceAccountKey) {
     try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
       firebaseApp = admin.initializeApp({
@@ -22,12 +28,20 @@ try {
       console.error("[FIREBASE] Failed to parse service account key:", parseError);
       throw new Error("Invalid FIREBASE_SERVICE_ACCOUNT_KEY format");
     }
-  } else {
-    // Throw error if no credentials provided
+  } else if (isProduction && !hasApplicationDefaultCreds) {
+    // Production should fail fast when Firebase isn't configured.
     throw new Error(
-      "FIREBASE_SERVICE_ACCOUNT_KEY is required. Please add your Firebase credentials to .env file. " +
-      "Visit https://console.firebase.google.com to get your service account key."
+      "Firebase credentials are required in production. Set FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS, " +
+        "or configure FIRESTORE_EMULATOR_HOST for local development.",
     );
+  } else {
+    // Development mode: allow server to boot without Firebase credentials.
+    console.log("[FIREBASE] Running in development mode without credentials");
+    console.log("[FIREBASE] Set FIREBASE_SERVICE_ACCOUNT_KEY for production");
+
+    firebaseApp = admin.initializeApp({
+      projectId: process.env.FIREBASE_PROJECT_ID || "rideshare-hub-dev",
+    });
   }
 }
 
