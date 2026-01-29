@@ -5,6 +5,7 @@ import '../models/booking.dart';
 import '../models/customer.dart';
 import '../models/driver.dart';
 import '../config/api_config.dart';
+import 'firebase_service.dart';
 
 class OtpResult {
   final bool success;
@@ -17,18 +18,42 @@ class OtpResult {
 
 class ApiService {
   static String baseUrl = ApiConfig.baseUrl;
-  
+  static bool _useFirebase = false;
+
   static void setBaseUrl(String url) {
     baseUrl = url;
     print('API Base URL set to: $baseUrl');
   }
 
+  static void setUseFirebase(bool useFirebase) {
+    _useFirebase = useFirebase;
+    print('Using Firebase: $_useFirebase');
+  }
+
   // Initialize with default config
   static void initialize() {
     ApiConfig.printConfig();
+    _useFirebase = FirebaseService.isInitialized;
   }
 
   static Future<OtpResult> sendOtp(String mobile, String userType) async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        final otp = await FirebaseService.storeOtp(mobile, userType);
+        if (otp.isNotEmpty) {
+          return OtpResult(
+            success: true,
+            otp: otp,
+            expiresAt: DateTime.now().add(const Duration(minutes: 5)),
+          );
+        }
+      } catch (e) {
+        print('Firebase OTP failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/otp/send'),
@@ -51,6 +76,19 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> verifyOtp(String mobile, String otp, String userType) async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        final isValid = await FirebaseService.verifyOtp(mobile, otp);
+        if (isValid) {
+          return {'success': true};
+        }
+      } catch (e) {
+        print('Firebase OTP verification failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/otp/verify'),
@@ -69,6 +107,16 @@ class ApiService {
   }
 
   static Future<List<Car>> getCars() async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        return await FirebaseService.getCars();
+      } catch (e) {
+        print('Firebase getCars failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.get(Uri.parse('$baseUrl/api/cars'));
       if (response.statusCode == 200) {
@@ -126,6 +174,16 @@ class ApiService {
   }
 
   static Future<Customer?> registerCustomer(String mobile, String name, int age) async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        return await FirebaseService.registerCustomer(mobile, name, age);
+      } catch (e) {
+        print('Firebase registerCustomer failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/customer/register'),
@@ -144,6 +202,16 @@ class ApiService {
   }
 
   static Future<Customer?> loginCustomer(String mobile) async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        return await FirebaseService.getCustomerByMobile(mobile);
+      } catch (e) {
+        print('Firebase loginCustomer failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/customer/login'),
@@ -168,6 +236,22 @@ class ApiService {
     required String aadhaarNumber,
     required String licenseNumber,
   }) async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        return await FirebaseService.registerDriver(
+          mobile: mobile,
+          name: name,
+          age: age,
+          aadhaarNumber: aadhaarNumber,
+          licenseNumber: licenseNumber,
+        );
+      } catch (e) {
+        print('Firebase registerDriver failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/driver/register'),
@@ -192,6 +276,16 @@ class ApiService {
   }
 
   static Future<Driver?> loginDriver(String mobile) async {
+    // Try Firebase first if available
+    if (_useFirebase) {
+      try {
+        return await FirebaseService.getDriverByMobile(mobile);
+      } catch (e) {
+        print('Firebase loginDriver failed, trying REST API: $e');
+      }
+    }
+
+    // Fallback to REST API
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/driver/login'),
