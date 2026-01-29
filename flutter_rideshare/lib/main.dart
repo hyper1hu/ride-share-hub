@@ -140,13 +140,13 @@ class RideShareApp extends StatelessWidget {
           color: const Color(0xFF64748B),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor: Colors.black.withValues(alpha: 0.05),
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,
@@ -259,13 +259,13 @@ class RideShareApp extends StatelessWidget {
           color: const Color(0xFF64748B),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        shadowColor: Colors.black.withOpacity(0.2),
+        shadowColor: Colors.black.withValues(alpha: 0.2),
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,

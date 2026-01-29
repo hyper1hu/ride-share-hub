@@ -54,7 +54,7 @@ class _AddCarDialogState extends State<AddCarDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
-                  value: _vehicleType,
+                  initialValue: _vehicleType,
                   decoration: const InputDecoration(
                     labelText: 'Vehicle Type',
                     prefixIcon: Icon(Icons.directions_car),

@@ -56,14 +56,14 @@ class _DriverScreenState extends State<DriverScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lock, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                Icon(Icons.lock, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
                 const SizedBox(height: 24),
                 Text('Login Required', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: 8),
                 Text(
                   'Please login or register to access your driver dashboard.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 const SizedBox(height: 32),
                 FilledButton.icon(
@@ -111,7 +111,7 @@ class _DriverScreenState extends State<DriverScreen> {
                       ? 'Your registration is being reviewed by our admin team. You will be able to list vehicles once approved.'
                       : 'Your registration was rejected. Please contact support for assistance.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 const SizedBox(height: 32),
                 OutlinedButton.icon(
@@ -156,12 +156,12 @@ class _DriverScreenState extends State<DriverScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.directions_car_outlined, size: 64, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                  Icon(Icons.directions_car_outlined, size: 64, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   Text('No vehicles listed yet', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 8),
                   Text('Welcome ${driver.name}! Start earning by listing your vehicle.',
-                      style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                       textAlign: TextAlign.center),
                   const SizedBox(height: 24),
                   FilledButton.icon(
@@ -217,7 +217,7 @@ class _DriverCarCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(vehicleIcon, color: theme.colorScheme.primary),
@@ -241,14 +241,14 @@ class _DriverCarCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Text(car.carNumber, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                      Text(car.carNumber, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
+                    color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text('Available', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500)),
@@ -328,7 +328,7 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+        Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
         const SizedBox(width: 8),
         Flexible(child: Text(text, style: const TextStyle(fontSize: 14))),
       ],

@@ -50,7 +50,7 @@ class _BookingDialogState extends State<BookingDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.check_circle, size: 48, color: Colors.green),
@@ -75,7 +75,7 @@ class _BookingDialogState extends State<BookingDialog> {
                   ]),
                   const SizedBox(height: 8),
                   Row(children: [
-                    Icon(Icons.directions_car, size: 16, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                    Icon(Icons.directions_car, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                     const SizedBox(width: 4),
                     Text('${widget.car.carModel} - ${widget.car.driverName}'),
                   ]),
@@ -146,7 +146,7 @@ class _BookingDialogState extends State<BookingDialog> {
                     onPressed: _seatsBooked < availableSeats ? () => setState(() => _seatsBooked++) : null,
                     icon: const Icon(Icons.add_circle_outline),
                   ),
-                  Text('($availableSeats available)', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                  Text('($availableSeats available)', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                 ],
               ),
               const SizedBox(height: 12),
