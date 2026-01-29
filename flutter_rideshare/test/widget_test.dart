@@ -6,20 +6,14 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:rideshare/main.dart';
-import 'package:rideshare/services/backend/bootstrap.dart';
+import 'package:rideshare/screens/firebase_setup_screen.dart';
 
 void main() {
   testWidgets('App loads home screen', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    final backend = BackendBootstrap.forTests(prefs);
-
-    await tester.pumpWidget(RideShareApp(backend: backend, prefs: prefs));
+    await tester.pumpWidget(const FirebaseSetupApp(error: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('Ride Share Hub'), findsOneWidget);
+    expect(find.text('Firebase Setup Required'), findsOneWidget);
   });
 }

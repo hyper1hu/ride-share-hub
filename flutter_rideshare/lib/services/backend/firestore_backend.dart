@@ -6,7 +6,6 @@ import '../../models/booking.dart';
 import '../../models/car.dart';
 import '../../models/customer.dart';
 import '../../models/driver.dart';
-import '../api_service.dart';
 import 'backend.dart';
 
 class FirestoreBackend implements RideShareBackend {
@@ -14,9 +13,6 @@ class FirestoreBackend implements RideShareBackend {
   final Random _random;
 
   FirestoreBackend({required this.db, Random? random}) : _random = random ?? Random();
-
-  @override
-  bool get supportsFirebase => true;
 
   DocumentReference<Map<String, dynamic>> _otpDoc(String mobile, String userType) {
     return db.collection('otps').doc('$userType-$mobile');

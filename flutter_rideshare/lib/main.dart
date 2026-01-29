@@ -10,17 +10,29 @@ import 'screens/home_screen.dart';
 import 'screens/customer_screen.dart';
 import 'screens/driver_screen.dart';
 import 'screens/driver_register_screen.dart';
+import 'screens/firebase_setup_screen.dart';
 import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
-  final backend = await BackendBootstrap.initialize(prefs);
+  RideShareBackend? backend;
+  Object? backendInitError;
+  try {
+    backend = await BackendBootstrap.initialize();
+  } catch (e) {
+    backendInitError = e;
+  }
   
   // Initialize notification service
   await NotificationService().initialize();
-  
+
+  if (backend == null) {
+    runApp(FirebaseSetupApp(error: backendInitError));
+    return;
+  }
+
   runApp(RideShareApp(backend: backend, prefs: prefs));
 }
 
@@ -43,32 +55,6 @@ class RideShareApp extends StatelessWidget {
             darkTheme: _buildDarkTheme(),
             themeMode: appProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             initialRoute: '/',
-            builder: (context, child) {
-              final offlineBanner = !appProvider.backend.supportsFirebase
-                  ? MaterialBanner(
-                      content: const Text(
-                        'Offline mode: using local storage. Configure Firebase to sync data.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
-                          },
-                          child: const Text('Dismiss'),
-                        ),
-                      ],
-                    )
-                  : null;
-
-              if (offlineBanner != null) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!context.mounted) return;
-                  final messenger = ScaffoldMessenger.of(context);
-                  messenger.showMaterialBanner(offlineBanner);
-                });
-              }
-              return child ?? const SizedBox.shrink();
-            },
             routes: {
               '/': (context) => const HomeScreen(),
               '/customer': (context) => const CustomerScreen(),
