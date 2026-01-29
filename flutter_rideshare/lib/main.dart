@@ -7,17 +7,21 @@ import 'screens/customer_screen.dart';
 import 'screens/driver_screen.dart';
 import 'screens/driver_register_screen.dart';
 import 'services/api_service.dart';
+import 'services/firebase_service.dart';
 import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize Firebase (optional - will use REST API fallback if fails)
+  await FirebaseService.initialize();
+
   // Initialize API service with configuration
   ApiService.initialize();
-  
+
   // Initialize notification service
   await NotificationService().initialize();
-  
+
   runApp(const RideShareApp());
 }
 
