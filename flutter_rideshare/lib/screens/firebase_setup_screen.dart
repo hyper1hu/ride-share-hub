@@ -41,11 +41,11 @@ class FirebaseSetupScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Fix:
+              '''Fix:
 1) Create a Firebase project
 2) Add Android app in Firebase console
 3) Download google-services.json into android/app/
-4) Rebuild the app',
+4) Rebuild the app''',
             ),
             const SizedBox(height: 12),
             Text(
@@ -61,4 +61,3 @@ class FirebaseSetupScreen extends StatelessWidget {
     );
   }
 }
-
