@@ -1,35 +1,13 @@
 import admin from "firebase-admin";
 
-let firebaseInitialized = false;
-
+// Use the centralized Firebase initialization from firebase-db
 export function initializeFirebase() {
-  if (firebaseInitialized) {
-    return admin;
-  }
-
   try {
-    // Check if Firebase credentials are provided
-    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    
-    if (serviceAccountKey) {
-      // Production: Use service account key from environment variable
-      const serviceAccount = JSON.parse(serviceAccountKey);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      console.log("[Firebase] Initialized with service account credentials");
-    } else {
-      // Development: Firebase is optional, will use mock OTP
-      console.log("[Firebase] No credentials found - using mock OTP for development");
-      console.log("[Firebase] To enable real SMS OTP, set FIREBASE_SERVICE_ACCOUNT_KEY environment variable");
-      return null;
-    }
-
-    firebaseInitialized = true;
-    return admin;
+    // Check if Firebase is already initialized by firebase-db.ts
+    return admin.app();
   } catch (error) {
-    console.error("[Firebase] Initialization error:", error);
-    console.log("[Firebase] Falling back to mock OTP for development");
+    // If not initialized, return null for development mode
+    console.log("[Firebase] Not initialized - using mock OTP for development");
     return null;
   }
 }
