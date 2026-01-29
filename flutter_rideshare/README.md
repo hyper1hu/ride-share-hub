@@ -1,162 +1,330 @@
-# RideShare Flutter App
+# RideShare Hub Mobile App
 
-A cross-platform vehicle hire/ride-sharing application for West Bengal, India built with Flutter.
+Flutter-based mobile application for customers and drivers.
 
 ## Features
 
-- **8 Vehicle Types**: Car, SUV, Van, Bus, Minibus, Motorcycle, Auto Rickshaw, Truck
-- **441+ Locations**: Comprehensive coverage of all 23 West Bengal districts
-- **Driver Registration**: Secure registration with Aadhaar and license verification
-- **Customer Booking**: Easy ride booking with mobile number authentication
-- **GPS Location**: Auto-detect current location for pickup point suggestions
-- **Route Matching**: Find rides even on partial routes (Kolkata→Siliguri matches Kolkata→Darjeeling)
-- **Indian Rupees (₹)**: All fares displayed in INR
-- **Dark/Light Theme**: Toggle between themes with persistence
+### For Customers
+- OTP-based authentication
+- Search rides by origin and destination
+- View available vehicles with pricing
+- Book rides instantly
+- Track booking history
+- Real-time booking status updates
 
-## Setup Instructions
+### For Drivers
+- Driver registration with verification
+- Vehicle registration and management
+- View incoming booking requests
+- Accept/reject bookings
+- Track earnings
+- Manage profile and documents
+
+## Download APK
+
+**Latest Release:** RideShareHub-v2.0.0.apk
+
+**Installation:**
+1. Download APK from repository: `flutter_rideshare/RideShareHub-v2.0.0.apk`
+2. Enable "Install from Unknown Sources" on Android device
+3. Open APK file and install
+4. Launch app and start using
+
+## Build from Source
 
 ### Prerequisites
 
-1. **Install Flutter SDK**
-   - Download from: https://flutter.dev/docs/get-started/install
-   - Add Flutter to your PATH
-   - Run `flutter doctor` to verify installation
+- Flutter SDK 3.0 or higher
+- Android Studio / Xcode
+- Dart SDK (included with Flutter)
 
-2. **Install an IDE**
-   - VS Code with Flutter extension, OR
-   - Android Studio with Flutter plugin
+### Setup Instructions
 
-3. **Set up a device**
-   - For Android: Install Android Studio and set up an emulator
-   - For iOS (Mac only): Install Xcode and set up a simulator
-   - Or connect a physical device
+#### 1. Install Flutter
 
-### Running the App
+**Windows/Linux/macOS:**
+```bash
+git clone https://github.com/flutter/flutter.git -b stable
+export PATH="$PATH:`pwd`/flutter/bin"
+flutter doctor
+```
+
+Or download from [Flutter.dev](https://flutter.dev/docs/get-started/install)
+
+#### 2. Clone Repository
 
 ```bash
 cd flutter_rideshare
-flutter pub get
-flutter run
 ```
 
-### Connecting to Backend
+#### 3. Install Dependencies
 
-The app connects to the Replit backend by default. To configure the API URL:
+```bash
+flutter pub get
+```
 
-1. Open `lib/main.dart`
-2. Update the `ApiService.setBaseUrl()` call:
-   - For Android emulator: `http://10.0.2.2:5000`
-   - For iOS simulator: `http://localhost:5000`
-   - For physical device: Use your computer's IP address (e.g., `http://192.168.1.100:5000`)
+#### 4. Configure API Endpoint
+
+Edit `lib/config/api_config.dart`:
+
+```dart
+class ApiConfig {
+  // Change this to your deployed backend URL
+  static const String baseUrl = 'https://your-backend-url.com';
+
+  // Or use local server for development
+  // static const String baseUrl = 'http://localhost:5000';
+  // For Android emulator: 'http://10.0.2.2:5000'
+}
+```
+
+#### 5. Build APK
+
+**Release APK (Recommended):**
+```bash
+flutter build apk --release
+```
+
+**Debug APK:**
+```bash
+flutter build apk --debug
+```
+
+**Split APKs by Architecture (Smaller size):**
+```bash
+flutter build apk --split-per-abi --release
+```
+
+Build output location:
+- `build/app/outputs/flutter-apk/app-release.apk`
+- `build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk`
+- `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`
+- `build/app/outputs/flutter-apk/app-x86_64-release.apk`
+
+#### 6. Run on Device/Emulator
+
+**Android:**
+```bash
+flutter run -d android
+```
+
+**iOS:**
+```bash
+flutter run -d ios
+```
+
+**List available devices:**
+```bash
+flutter devices
+```
+
+## Build Flavors
+
+The app supports multiple build flavors:
+
+### Development
+```bash
+flutter build apk --flavor development --release
+```
+
+### Production
+```bash
+flutter build apk --flavor production --release
+```
 
 ## Project Structure
 
 ```
-lib/
-├── main.dart                    # App entry point with routes
-├── data/
-│   └── locations.dart           # 441+ West Bengal locations
-├── models/
-│   ├── car.dart                 # Vehicle model
-│   ├── booking.dart             # Booking model
-│   ├── customer.dart            # Customer model
-│   └── driver.dart              # Driver model with Aadhaar
-├── providers/
-│   └── app_provider.dart        # State management with auth
-├── screens/
-│   ├── home_screen.dart         # Landing page
-│   ├── customer_screen.dart     # Browse & book rides
-│   ├── driver_screen.dart       # Driver dashboard
-│   └── driver_register_screen.dart  # Driver login/register
-├── services/
-│   ├── api_service.dart         # HTTP API client
-│   └── location_service.dart    # GPS location service
-└── widgets/
-    ├── add_car_dialog.dart      # Vehicle listing form
-    └── booking_dialog.dart      # Booking form
+flutter_rideshare/
+├── lib/
+│   ├── main.dart              # App entry point
+│   ├── config/
+│   │   └── api_config.dart    # API configuration
+│   ├── models/                # Data models
+│   │   ├── user.dart
+│   │   ├── vehicle.dart
+│   │   └── booking.dart
+│   ├── screens/               # UI screens
+│   │   ├── auth/
+│   │   ├── customer/
+│   │   └── driver/
+│   ├── services/              # API services
+│   │   ├── auth_service.dart
+│   │   ├── booking_service.dart
+│   │   └── vehicle_service.dart
+│   └── widgets/               # Reusable widgets
+├── android/                   # Android configuration
+├── ios/                       # iOS configuration
+├── pubspec.yaml              # Dependencies
+└── RideShareHub-v2.0.0.apk   # Pre-built APK
 ```
 
-## Screens
+## Dependencies
 
-### Home Screen
-- Welcome page with role selection
-- Links to Customer and Driver portals
-- Popular routes display
-- Vehicle type showcase
+Key Flutter packages used:
 
-### Customer Screen
-- Search rides by origin and destination
-- Location autocomplete with 441+ locations
-- View available vehicles with details
-- Book rides with mobile authentication
+- `http` - HTTP client for API calls
+- `provider` - State management
+- `shared_preferences` - Local data storage
+- `flutter_secure_storage` - Secure credential storage
+- `intl` - Internationalization
 
-### Driver Registration
-- Login with mobile number
-- New driver registration with:
-  - Name, Age, Mobile
-  - 12-digit Aadhaar number (stored securely, masked in display)
-  - Driving license number
-- Verification status display (Pending/Approved/Rejected)
+See `pubspec.yaml` for complete list.
 
-### Driver Dashboard
-- View listed vehicles
-- Add new vehicles with routes and fares
-- Manage bookings
-- Only accessible after admin approval
+## Testing
 
-## API Endpoints
-
-The app connects to these backend endpoints:
-
-**Authentication:**
-- `POST /api/auth/customer/login` - Customer login
-- `POST /api/auth/customer/register` - Customer registration
-- `POST /api/auth/driver/login` - Driver login
-- `POST /api/auth/driver/register` - Driver registration
-
-**Vehicles:**
-- `GET /api/cars` - List all vehicles
-- `GET /api/cars/search` - Search with route matching
-- `POST /api/cars` - Create vehicle listing
-
-**Bookings:**
-- `POST /api/bookings` - Create booking
-
-## Build for Production
-
+### Run Unit Tests
 ```bash
-# Android APK
+flutter test
+```
+
+### Run Integration Tests
+```bash
+flutter test integration_test
+```
+
+## Build Configurations
+
+### Android Build Configuration
+
+**Minimum SDK:** 21 (Android 5.0)
+**Target SDK:** 34 (Android 14)
+**Compile SDK:** 34
+
+Edit in `android/app/build.gradle`:
+```gradle
+android {
+    compileSdkVersion 34
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode 1
+        versionName "2.0.0"
+    }
+}
+```
+
+### iOS Build Configuration
+
+**Minimum iOS Version:** 12.0
+
+Edit in `ios/Podfile`:
+```ruby
+platform :ios, '12.0'
+```
+
+## Signing (For Release)
+
+### Android Signing
+
+1. Create keystore:
+```bash
+keytool -genkey -v -keystore rideshare.keystore -alias rideshare \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. Create `android/key.properties`:
+```properties
+storePassword=your-store-password
+keyPassword=your-key-password
+keyAlias=rideshare
+storeFile=/path/to/rideshare.keystore
+```
+
+3. Build signed APK:
+```bash
+flutter build apk --release
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue:** "Flutter command not found"
+**Solution:**
+```bash
+export PATH="$PATH:/path/to/flutter/bin"
+flutter doctor
+```
+
+**Issue:** "Gradle build failed"
+**Solution:**
+```bash
+cd android
+./gradlew clean
+cd ..
+flutter clean
+flutter pub get
 flutter build apk
-
-# Android App Bundle (for Play Store)
-flutter build appbundle
-
-# iOS (Mac only)
-flutter build ios
 ```
 
-## Permissions
+**Issue:** "API connection failed"
+**Solution:**
+1. Check `lib/config/api_config.dart` has correct backend URL
+2. Ensure backend server is running
+3. For Android emulator, use `http://10.0.2.2:5000` instead of `localhost`
 
-The app requires these permissions:
-
-**Android** (`android/app/src/main/AndroidManifest.xml`):
-```xml
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+**Issue:** "SDK license not accepted"
+**Solution:**
+```bash
+flutter doctor --android-licenses
 ```
 
-**iOS** (`ios/Runner/Info.plist`):
-```xml
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>This app needs access to your location to suggest nearby pickup points.</string>
+### Android Emulator Network
+
+To connect to local backend from Android emulator:
+- Use `http://10.0.2.2:5000` instead of `http://localhost:5000`
+- Ensure backend is running on host machine
+- Check firewall allows connections
+
+## Release Checklist
+
+Before releasing new version:
+
+- [ ] Update version in `pubspec.yaml`
+- [ ] Update `versionCode` and `versionName` in `android/app/build.gradle`
+- [ ] Update API endpoint in `lib/config/api_config.dart`
+- [ ] Test on physical devices (Android/iOS)
+- [ ] Build release APK: `flutter build apk --release`
+- [ ] Test release APK on device
+- [ ] Create signed APK with release keystore
+- [ ] Upload to repository with version tag
+
+## Performance Optimization
+
+**Reduce APK Size:**
+```bash
+flutter build apk --split-per-abi --release
 ```
 
-## Tech Stack
+**Analyze APK Size:**
+```bash
+flutter build apk --analyze-size
+```
 
-- **Flutter 3.x** with Material 3 design
-- **Provider** for state management
-- **HTTP** for API calls
-- **Geolocator** for GPS location
-- **Geocoding** for address lookup
-- **SharedPreferences** for local storage
+**Enable Obfuscation:**
+```bash
+flutter build apk --obfuscate --split-debug-info=/<project>/debug-info
+```
+
+## Support
+
+For issues:
+1. Check [Troubleshooting](#troubleshooting) section
+2. Run `flutter doctor` to check environment
+3. Check Flutter version: `flutter --version`
+4. Review build logs for errors
+5. Open GitHub issue with error details
+
+## Resources
+
+- [Flutter Documentation](https://flutter.dev/docs)
+- [Dart Language](https://dart.dev)
+- [Flutter Packages](https://pub.dev)
+- [Backend Setup Guide](../SETUP.md)
+
+---
+
+**Current Version:** v2.0.0
+**Minimum Flutter:** 3.0.0
+**Platforms:** Android, iOS
