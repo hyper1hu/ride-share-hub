@@ -5,8 +5,20 @@ import '../models/booking.dart';
 import '../models/customer.dart';
 import '../models/driver.dart';
 import '../services/api_service.dart';
+import '../services/backend/backend.dart';
+
+class BackendError implements Exception {
+  final String message;
+  BackendError(this.message);
+
+  @override
+  String toString() => message;
+}
 
 class AppProvider with ChangeNotifier {
+  final RideShareBackend backend;
+  final SharedPreferences prefs;
+
   bool _isDarkMode = false;
   List<Car> _cars = [];
   List<Booking> _bookings = [];
@@ -33,36 +45,31 @@ class AppProvider with ChangeNotifier {
   String? get displayOtp => _displayOtp;
   bool get otpVerified => _otpVerified;
 
+  @Deprecated('Internal; use backend directly if needed')
+  String? get pendingOtpUserType => _pendingOtpUserType;
+
   List<Car> get availableCars => _cars.where((c) => c.status == 'available').toList();
 
-  AppProvider() {
-    _loadTheme();
+  AppProvider({required this.backend, required this.prefs}) {
+    _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _loadSavedAuth();
   }
 
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    notifyListeners();
-  }
-
   Future<void> _loadSavedAuth() async {
-    final prefs = await SharedPreferences.getInstance();
     final customerMobile = prefs.getString('customerMobile');
     final driverMobile = prefs.getString('driverMobile');
     
     if (customerMobile != null) {
-      _customer = await ApiService.loginCustomer(customerMobile);
+      _customer = await backend.loginCustomer(customerMobile);
     }
     if (driverMobile != null) {
-      _driver = await ApiService.loginDriver(driverMobile);
+      _driver = await backend.loginDriver(driverMobile);
     }
     notifyListeners();
   }
 
   Future<void> toggleTheme() async {
     _isDarkMode = !_isDarkMode;
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', _isDarkMode);
     notifyListeners();
   }
@@ -72,7 +79,7 @@ class AppProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final result = await ApiService.sendOtp(mobile, userType);
+    final result = await backend.sendOtp(mobile, userType);
     
     if (result.success) {
       _pendingOtpMobile = mobile;
@@ -93,7 +100,7 @@ class AppProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final result = await ApiService.verifyOtp(mobile, otp, userType);
+    final result = await backend.verifyOtp(mobile, otp, userType);
     
     if (result['success'] == true) {
       _otpVerified = true;
@@ -120,10 +127,9 @@ class AppProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    _customer = await ApiService.loginCustomer(mobile);
+    _customer = await backend.loginCustomer(mobile);
     
     if (_customer != null) {
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('customerMobile', mobile);
     } else {
       _error = 'Customer not found. Please register first.';
@@ -139,10 +145,9 @@ class AppProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    _customer = await ApiService.registerCustomer(mobile, name, age);
+    _customer = await backend.registerCustomer(mobile, name, age);
     
     if (_customer != null) {
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('customerMobile', mobile);
     } else {
       _error = 'Registration failed. Please try again.';
@@ -158,10 +163,9 @@ class AppProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    _driver = await ApiService.loginDriver(mobile);
+    _driver = await backend.loginDriver(mobile);
     
     if (_driver != null) {
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('driverMobile', mobile);
     } else {
       _error = 'Driver not found. Please register first.';
@@ -183,7 +187,7 @@ class AppProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    _driver = await ApiService.registerDriver(
+    _driver = await backend.registerDriver(
       mobile: mobile,
       name: name,
       age: age,
@@ -192,7 +196,6 @@ class AppProvider with ChangeNotifier {
     );
     
     if (_driver != null) {
-      final prefs = await SharedPreferences.getInstance();
       await prefs.setString('driverMobile', mobile);
     } else {
       _error = 'Registration failed. Please try again.';
@@ -204,7 +207,6 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.remove('customerMobile');
     await prefs.remove('driverMobile');
     _customer = null;
@@ -213,14 +215,12 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> logoutCustomer() async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.remove('customerMobile');
     _customer = null;
     notifyListeners();
   }
 
   Future<void> logoutDriver() async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.remove('driverMobile');
     _driver = null;
     notifyListeners();
@@ -230,7 +230,8 @@ class AppProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    _cars = await ApiService.getCars();
+    _cars = await backend.getCars();
+    _bookings = await backend.getBookings();
 
     _isLoading = false;
     notifyListeners();
@@ -240,22 +241,43 @@ class AppProvider with ChangeNotifier {
     if (origin == null && destination == null) {
       return availableCars;
     }
-    return await ApiService.searchCars(origin ?? '', destination ?? '');
+    return await backend.searchCars(origin: origin ?? '', destination: destination ?? '');
   }
 
-  void addCar(Car car) {
-    _cars.insert(0, car);
+  Future<bool> addCar(Car car) async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
+
+    final saved = await backend.createCar(car);
+    if (saved == null) {
+      _error = 'Failed to list vehicle.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+    _cars.insert(0, saved);
+    _isLoading = false;
+    notifyListeners();
+    return true;
   }
 
-  void removeCar(String carId) {
+  Future<void> removeCar(String carId) async {
+    await backend.deleteCar(carId);
     _cars.removeWhere((c) => c.id == carId);
     notifyListeners();
   }
 
-  void addBooking(Booking booking) {
-    _bookings.insert(0, booking);
+  Future<Booking?> createBooking(Booking booking) async {
+    final saved = await backend.createBooking(booking);
+    if (saved == null) {
+      _error = 'Failed to create booking.';
+      notifyListeners();
+      return null;
+    }
+    _bookings.insert(0, saved);
     notifyListeners();
+    return saved;
   }
 
   List<Booking> getBookingsForCar(String carId) {

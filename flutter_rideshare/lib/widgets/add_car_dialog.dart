@@ -172,11 +172,23 @@ class _AddCarDialogState extends State<AddCarDialog> {
         seatsAvailable: int.tryParse(_seatsController.text) ?? 4,
       );
 
-      Provider.of<AppProvider>(context, listen: false).addCar(car);
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vehicle listed successfully!')),
-      );
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      provider.addCar(car).then((success) {
+        if (!mounted) return;
+        if (success) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vehicle listed successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(provider.error ?? 'Failed to list vehicle'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
     }
   }
 }

@@ -63,6 +63,12 @@ cd flutter_rideshare
 flutter pub get
 ```
 
+#### 3a. Configure Firebase/Firestore (Recommended)
+
+See `FIREBASE_SETUP.md`.
+
+If Firebase isn’t configured, the app automatically runs in **offline local mode** using local storage.
+
 #### 4. Configure API Endpoint
 
 Edit `lib/config/api_config.dart`:
