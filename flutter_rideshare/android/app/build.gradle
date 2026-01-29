@@ -13,7 +13,9 @@ if (file("google-services.json").exists()) {
 android {
     namespace = "com.rideshare.rideshare"
     compileSdk = 36
-    ndkVersion = "27.0.12077973"
+
+    // This app does not require the Android NDK.
+    // Avoid specifying `ndkVersion` to prevent Gradle from forcing NDK installs.
 
     compileOptions {
         coreLibraryDesugaringEnabled true
@@ -29,7 +31,7 @@ android {
         applicationId = "com.rideshare.rideshare"
         // Firebase Auth (23.x) requires minSdk 23.
         // Keeping this explicit avoids manifest-merge failures.
-        minSdkVersion = flutter.minSdkVersion
+        minSdkVersion = 23
         targetSdk = 36
         versionCode = 2
         versionName = "2.0.0"

@@ -71,7 +71,7 @@ flutter build apk --release
 
 **Debug APK:**
 ```bash
-flutter build apk --debug
+flutter build apk --flavor development --debug
 ```
 
 **Split APKs by Architecture (Smaller size):**
@@ -80,10 +80,10 @@ flutter build apk --split-per-abi --release
 ```
 
 Build output location:
-- `build/app/outputs/flutter-apk/app-release.apk`
-- `build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk`
-- `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`
-- `build/app/outputs/flutter-apk/app-x86_64-release.apk`
+- `build/app/outputs/flutter-apk/app-development-debug.apk`
+- `build/app/outputs/flutter-apk/app-production-debug.apk`
+- `build/app/outputs/flutter-apk/app-development-release.apk`
+- `build/app/outputs/flutter-apk/app-production-release.apk`
 
 #### 6. Run on Device/Emulator
 
