@@ -1,3 +1,5 @@
+import '../utils/date_time_parser.dart';
+
 class Driver {
   final String id;
   final String mobile;
@@ -39,9 +41,7 @@ class Driver {
       aadhaarNumber: json['aadhaarNumber'] ?? '',
       licenseNumber: json['licenseNumber'] ?? '',
       verificationStatus: json['verificationStatus'] ?? 'pending',
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+      createdAt: parseDateTime(json['createdAt']),
     );
   }
 

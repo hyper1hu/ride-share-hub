@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/car.dart';
 import '../models/booking.dart';
@@ -20,7 +21,7 @@ class ApiService {
   
   static void setBaseUrl(String url) {
     baseUrl = url;
-    print('API Base URL set to: $baseUrl');
+    debugPrint('API Base URL set to: $baseUrl');
   }
 
   // Initialize with default config
@@ -45,7 +46,7 @@ class ApiService {
       }
       return OtpResult(success: false, error: data['error']?.toString() ?? 'Failed to send OTP');
     } catch (e) {
-      print('Error sending OTP: $e');
+      debugPrint('Error sending OTP: $e');
       return OtpResult(success: false, error: 'Network error');
     }
   }
@@ -63,7 +64,7 @@ class ApiService {
       }
       return {'success': false, 'error': data['error']?.toString() ?? 'Invalid OTP'};
     } catch (e) {
-      print('Error verifying OTP: $e');
+      debugPrint('Error verifying OTP: $e');
       return {'success': false, 'error': 'Network error'};
     }
   }
@@ -77,7 +78,7 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Error fetching cars: $e');
+      debugPrint('Error fetching cars: $e');
       return [];
     }
   }
@@ -93,7 +94,7 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Error searching cars: $e');
+      debugPrint('Error searching cars: $e');
       return [];
     }
   }
@@ -110,7 +111,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error creating car: $e');
+      debugPrint('Error creating car: $e');
       return null;
     }
   }
@@ -120,7 +121,7 @@ class ApiService {
       final response = await http.delete(Uri.parse('$baseUrl/api/cars/$carId'));
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting car: $e');
+      debugPrint('Error deleting car: $e');
       return false;
     }
   }
@@ -138,7 +139,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error registering customer: $e');
+      debugPrint('Error registering customer: $e');
       return null;
     }
   }
@@ -156,7 +157,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error logging in customer: $e');
+      debugPrint('Error logging in customer: $e');
       return null;
     }
   }
@@ -186,7 +187,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error registering driver: $e');
+      debugPrint('Error registering driver: $e');
       return null;
     }
   }
@@ -204,7 +205,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error logging in driver: $e');
+      debugPrint('Error logging in driver: $e');
       return null;
     }
   }
@@ -221,7 +222,7 @@ class ApiService {
       }
       return null;
     } catch (e) {
-      print('Error creating booking: $e');
+      debugPrint('Error creating booking: $e');
       return null;
     }
   }
@@ -235,7 +236,7 @@ class ApiService {
       }
       return [];
     } catch (e) {
-      print('Error fetching bookings: $e');
+      debugPrint('Error fetching bookings: $e');
       return [];
     }
   }

@@ -1,33 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'services/backend/bootstrap.dart';
+import 'services/backend/backend.dart';
 import 'providers/app_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/customer_screen.dart';
 import 'screens/driver_screen.dart';
 import 'screens/driver_register_screen.dart';
-import 'services/api_service.dart';
 import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize API service with configuration
-  ApiService.initialize();
+
+  final prefs = await SharedPreferences.getInstance();
+  final backend = await BackendBootstrap.initialize(prefs);
   
   // Initialize notification service
   await NotificationService().initialize();
   
-  runApp(const RideShareApp());
+  runApp(RideShareApp(backend: backend, prefs: prefs));
 }
 
 class RideShareApp extends StatelessWidget {
-  const RideShareApp({super.key});
+  final RideShareBackend backend;
+  final SharedPreferences prefs;
+
+  const RideShareApp({super.key, required this.backend, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AppProvider(),
+      create: (_) => AppProvider(backend: backend, prefs: prefs),
       child: Consumer<AppProvider>(
         builder: (context, appProvider, _) {
           return MaterialApp(
@@ -37,6 +43,32 @@ class RideShareApp extends StatelessWidget {
             darkTheme: _buildDarkTheme(),
             themeMode: appProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             initialRoute: '/',
+            builder: (context, child) {
+              final offlineBanner = !appProvider.backend.supportsFirebase
+                  ? MaterialBanner(
+                      content: const Text(
+                        'Offline mode: using local storage. Configure Firebase to sync data.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+                          },
+                          child: const Text('Dismiss'),
+                        ),
+                      ],
+                    )
+                  : null;
+
+              if (offlineBanner != null) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!context.mounted) return;
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.showMaterialBanner(offlineBanner);
+                });
+              }
+              return child ?? const SizedBox.shrink();
+            },
             routes: {
               '/': (context) => const HomeScreen(),
               '/customer': (context) => const CustomerScreen(),
@@ -53,7 +85,6 @@ class RideShareApp extends StatelessWidget {
     const primaryColor = Color(0xFF1E3A8A); // Deep Blue
     const secondaryColor = Color(0xFF3B82F6); // Vibrant Blue
     const accentColor = Color(0xFF14B8A6); // Teal
-    const warningColor = Color(0xFFF59E0B); // Orange
 
     return ThemeData(
       useMaterial3: true,
@@ -109,7 +140,7 @@ class RideShareApp extends StatelessWidget {
           color: const Color(0xFF64748B),
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 0,
         color: Colors.white,
         shape: RoundedRectangleBorder(
@@ -173,7 +204,6 @@ class RideShareApp extends StatelessWidget {
     const primaryColor = Color(0xFF3B82F6); // Vibrant Blue
     const secondaryColor = Color(0xFF60A5FA); // Light Blue
     const accentColor = Color(0xFF14B8A6); // Teal
-    const warningColor = Color(0xFFF59E0B); // Orange
 
     return ThemeData(
       useMaterial3: true,
@@ -229,7 +259,7 @@ class RideShareApp extends StatelessWidget {
           color: const Color(0xFF64748B),
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 0,
         color: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(

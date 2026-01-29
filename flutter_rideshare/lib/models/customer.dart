@@ -1,3 +1,5 @@
+import '../utils/date_time_parser.dart';
+
 class Customer {
   final String id;
   final String mobile;
@@ -19,9 +21,7 @@ class Customer {
       mobile: json['mobile'] ?? '',
       name: json['name'] ?? '',
       age: json['age'] ?? 0,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
+      createdAt: parseDateTime(json['createdAt']),
     );
   }
 

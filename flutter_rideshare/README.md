@@ -63,6 +63,12 @@ cd flutter_rideshare
 flutter pub get
 ```
 
+#### 3a. Configure Firebase/Firestore (Recommended)
+
+See `FIREBASE_SETUP.md`.
+
+If Firebase isn’t configured, the app automatically runs in **offline local mode** using local storage.
+
 #### 4. Configure API Endpoint
 
 Edit `lib/config/api_config.dart`:
@@ -187,7 +193,7 @@ flutter test integration_test
 
 ### Android Build Configuration
 
-**Minimum SDK:** 21 (Android 5.0)
+**Minimum SDK:** 23 (Android 6.0)
 **Target SDK:** 34 (Android 14)
 **Compile SDK:** 34
 
@@ -196,7 +202,7 @@ Edit in `android/app/build.gradle`:
 android {
     compileSdkVersion 34
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 34
         versionCode 1
         versionName "2.0.0"
@@ -321,7 +327,12 @@ For issues:
 - [Flutter Documentation](https://flutter.dev/docs)
 - [Dart Language](https://dart.dev)
 - [Flutter Packages](https://pub.dev)
-- [Backend Setup Guide](../SETUP.md)
+
+---
+
+## Firebase Setup
+
+See `FIREBASE_SETUP.md`.
 
 ---
 

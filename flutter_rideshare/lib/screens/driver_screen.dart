@@ -302,11 +302,13 @@ class _DriverCarCard extends StatelessWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () {
-              Provider.of<AppProvider>(context, listen: false).removeCar(car.id);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Vehicle listing removed')),
-              );
+              Provider.of<AppProvider>(context, listen: false).removeCar(car.id).then((_) {
+                if (!context.mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Vehicle listing removed')),
+                );
+              });
             },
             child: const Text('Remove'),
           ),

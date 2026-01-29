@@ -145,7 +145,9 @@ class _AddCarDialogState extends State<AddCarDialog> {
         border: const OutlineInputBorder(),
       ),
       onTap: () async {
+        if (!mounted) return;
         final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+        if (!mounted) return;
         if (time != null) {
           controller.text = time.format(context);
         }
@@ -172,11 +174,23 @@ class _AddCarDialogState extends State<AddCarDialog> {
         seatsAvailable: int.tryParse(_seatsController.text) ?? 4,
       );
 
-      Provider.of<AppProvider>(context, listen: false).addCar(car);
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vehicle listed successfully!')),
-      );
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      provider.addCar(car).then((success) {
+        if (!mounted) return;
+        if (success) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vehicle listed successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(provider.error ?? 'Failed to list vehicle'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
     }
   }
 }

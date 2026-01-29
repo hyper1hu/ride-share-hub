@@ -1,5 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:flutter/foundation.dart';
 
 class LocationService {
   static Future<bool> checkPermission() async {
@@ -32,7 +33,7 @@ class LocationService {
         desiredAccuracy: LocationAccuracy.high,
       );
     } catch (e) {
-      print('Error getting location: $e');
+      debugPrint('Error getting location: $e');
       return null;
     }
   }
@@ -59,7 +60,7 @@ class LocationService {
       }
       return null;
     } catch (e) {
-      print('Error getting address: $e');
+      debugPrint('Error getting address: $e');
       return null;
     }
   }

@@ -6,7 +6,7 @@ class Landmark {
   final String type; // 'city', 'station', 'airport', 'tourist', 'monument'
   final String? description;
 
-  Landmark({
+  const Landmark({
     required this.name,
     required this.location,
     required this.type,
@@ -17,199 +17,199 @@ class Landmark {
 class LandmarksData {
   static final List<Landmark> allLandmarks = [
     // Kolkata - Major Locations
-    Landmark(
+    const Landmark(
       name: 'Victoria Memorial',
       location: LatLng(22.5448, 88.3426),
       type: 'monument',
       description: 'Iconic white marble building',
     ),
-    Landmark(
+    const Landmark(
       name: 'Howrah Bridge',
       location: LatLng(22.5851, 88.3469),
       type: 'monument',
       description: 'Famous cantilever bridge',
     ),
-    Landmark(
+    const Landmark(
       name: 'Eden Gardens',
       location: LatLng(22.5648, 88.3433),
       type: 'monument',
       description: 'Historic cricket stadium',
     ),
-    Landmark(
+    const Landmark(
       name: 'Howrah Station',
       location: LatLng(22.5833, 88.3417),
       type: 'station',
       description: 'Major railway station',
     ),
-    Landmark(
+    const Landmark(
       name: 'Sealdah Station',
       location: LatLng(22.5694, 88.3704),
       type: 'station',
     ),
-    Landmark(
+    const Landmark(
       name: 'Netaji Subhas Chandra Bose International Airport',
       location: LatLng(22.6547, 88.4467),
       type: 'airport',
     ),
-    Landmark(
+    const Landmark(
       name: 'Park Street',
       location: LatLng(22.5536, 88.3515),
       type: 'city',
       description: 'Famous shopping and food street',
     ),
-    Landmark(
+    const Landmark(
       name: 'New Town',
       location: LatLng(22.5844, 88.4795),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Salt Lake',
       location: LatLng(22.5760, 88.4233),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Jadavpur',
       location: LatLng(22.4982, 88.3678),
       type: 'city',
     ),
     
     // District Headquarters
-    Landmark(
+    const Landmark(
       name: 'Siliguri',
       location: LatLng(26.7271, 88.3953),
       type: 'city',
       description: 'Gateway to North Bengal',
     ),
-    Landmark(
+    const Landmark(
       name: 'Darjeeling',
       location: LatLng(27.0360, 88.2627),
       type: 'tourist',
       description: 'Famous hill station',
     ),
-    Landmark(
+    const Landmark(
       name: 'Durgapur',
       location: LatLng(23.5204, 87.3119),
       type: 'city',
       description: 'Steel city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Asansol',
       location: LatLng(23.6839, 86.9525),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Malda',
       location: LatLng(25.0000, 88.1333),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Kharagpur',
       location: LatLng(22.3460, 87.2320),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Haldia',
       location: LatLng(22.0255, 88.0584),
       type: 'city',
       description: 'Port city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Krishnanagar',
       location: LatLng(23.4000, 88.5000),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Bankura',
       location: LatLng(23.2324, 87.0715),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Purulia',
       location: LatLng(23.3318, 86.3640),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Midnapore',
       location: LatLng(22.4224, 87.3198),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Murshidabad',
       location: LatLng(24.1833, 88.2833),
       type: 'city',
       description: 'Historic capital',
     ),
-    Landmark(
+    const Landmark(
       name: 'Cooch Behar',
       location: LatLng(26.3240, 89.4380),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Jalpaiguri',
       location: LatLng(26.5167, 88.7167),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Alipurduar',
       location: LatLng(26.4876, 89.5285),
       type: 'city',
     ),
     
     // Tourist Destinations
-    Landmark(
+    const Landmark(
       name: 'Digha',
       location: LatLng(21.6286, 87.5068),
       type: 'tourist',
       description: 'Popular beach destination',
     ),
-    Landmark(
+    const Landmark(
       name: 'Mandarmani',
       location: LatLng(21.6554, 87.7768),
       type: 'tourist',
       description: 'Beach resort',
     ),
-    Landmark(
+    const Landmark(
       name: 'Shantiniketan',
       location: LatLng(23.6820, 87.6810),
       type: 'tourist',
       description: 'Tagore\'s university town',
     ),
-    Landmark(
+    const Landmark(
       name: 'Sundarbans',
       location: LatLng(21.9497, 88.8868),
       type: 'tourist',
       description: 'Mangrove forest & tiger reserve',
     ),
-    Landmark(
+    const Landmark(
       name: 'Kalimpong',
       location: LatLng(27.0594, 88.4708),
       type: 'tourist',
       description: 'Hill station',
     ),
-    Landmark(
+    const Landmark(
       name: 'Dooars',
       location: LatLng(26.5450, 89.4700),
       type: 'tourist',
       description: 'Tea gardens region',
     ),
-    Landmark(
+    const Landmark(
       name: 'Bishnupur',
       location: LatLng(23.0796, 87.3185),
       type: 'tourist',
       description: 'Terracotta temples',
     ),
-    Landmark(
+    const Landmark(
       name: 'Bakkhali',
       location: LatLng(21.5622, 88.2433),
       type: 'tourist',
       description: 'Beach destination',
     ),
-    Landmark(
+    const Landmark(
       name: 'Diamond Harbour',
       location: LatLng(22.1886, 88.1887),
       type: 'tourist',
     ),
-    Landmark(
+    const Landmark(
       name: 'Kalighat',
       location: LatLng(22.5186, 88.3474),
       type: 'monument',
@@ -217,12 +217,12 @@ class LandmarksData {
     ),
     
     // Transport Hubs
-    Landmark(
+    const Landmark(
       name: 'Kolkata Port',
       location: LatLng(22.5568, 88.3089),
       type: 'city',
     ),
-    Landmark(
+    const Landmark(
       name: 'Esplanade',
       location: LatLng(22.5645, 88.3495),
       type: 'city',
@@ -236,10 +236,10 @@ class LandmarksData {
   }
 
   // Get city center (Kolkata)
-  static LatLng get kolkataCenter => LatLng(22.5726, 88.3639);
+  static LatLng get kolkataCenter => const LatLng(22.5726, 88.3639);
   
   // Get West Bengal center
-  static LatLng get westBengalCenter => LatLng(23.8103, 87.7615);
+  static LatLng get westBengalCenter => const LatLng(23.8103, 87.7615);
   
   // Search landmarks by name
   static List<Landmark> search(String query) {

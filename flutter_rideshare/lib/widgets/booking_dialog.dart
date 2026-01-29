@@ -210,8 +210,16 @@ class _BookingDialogState extends State<BookingDialog> {
         totalFare: _totalFare,
       );
 
-      Provider.of<AppProvider>(context, listen: false).addBooking(booking);
-      setState(() => _bookingSuccess = true);
+      Provider.of<AppProvider>(context, listen: false).createBooking(booking).then((created) {
+        if (!mounted) return;
+        if (created != null) {
+          setState(() => _bookingSuccess = true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking failed'), backgroundColor: Colors.red),
+          );
+        }
+      });
     }
   }
 }

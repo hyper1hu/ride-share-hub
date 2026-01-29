@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../models/car.dart';
 import '../data/locations.dart';
-import '../services/api_service.dart';
+import '../models/booking.dart';
 
 class CustomerScreen extends StatefulWidget {
   const CustomerScreen({super.key});
@@ -35,7 +35,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
 
   Future<void> _loadCars() async {
     setState(() => _isLoading = true);
-    _searchResults = await ApiService.getCars();
+    _searchResults = await context.read<AppProvider>().searchCars(origin: '', destination: '');
     setState(() {
       _isLoading = false;
       _hasSearched = true;
@@ -44,10 +44,10 @@ class _CustomerScreenState extends State<CustomerScreen> {
 
   Future<void> _searchCars() async {
     setState(() => _isLoading = true);
-    _searchResults = await ApiService.searchCars(
-      _originController.text,
-      _destinationController.text,
-    );
+    _searchResults = await context.read<AppProvider>().searchCars(
+          origin: _originController.text,
+          destination: _destinationController.text,
+        );
     setState(() {
       _isLoading = false;
       _hasSearched = true;
@@ -399,7 +399,7 @@ class _BookingSheetState extends State<_BookingSheet> {
     }
 
     setState(() => _isLoading = true);
-    final customer = await ApiService.loginCustomer(_mobileController.text);
+    final customer = await context.read<AppProvider>().backend.loginCustomer(_mobileController.text);
     setState(() => _isLoading = false);
 
     if (customer != null) {
@@ -419,21 +419,49 @@ class _BookingSheetState extends State<_BookingSheet> {
     }
 
     setState(() => _isLoading = true);
-    final customer = await ApiService.registerCustomer(
-      _mobileController.text,
-      _nameController.text,
-      int.tryParse(_ageController.text) ?? 25,
-    );
+    final customer = await context.read<AppProvider>().backend.registerCustomer(
+          _mobileController.text,
+          _nameController.text,
+          int.tryParse(_ageController.text) ?? 25,
+        );
     setState(() => _isLoading = false);
 
     if (customer != null) {
-      _confirmBooking();
+      await _createBooking(customerName: customer.name);
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration failed'), backgroundColor: Colors.red),
         );
       }
+    }
+  }
+
+  Future<void> _createBooking({required String customerName}) async {
+    final provider = context.read<AppProvider>();
+    final booking = Booking(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      carId: widget.car.id,
+      customerName: customerName,
+      customerPhone: _mobileController.text,
+      seatsBooked: _seats,
+      tripType: _tripType,
+      totalFare: _totalFare,
+    );
+
+    setState(() => _isLoading = true);
+    final created = await provider.createBooking(booking);
+    setState(() => _isLoading = false);
+
+    if (created != null) {
+      _confirmBooking();
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.error ?? 'Booking failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
