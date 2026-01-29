@@ -27,7 +27,9 @@ android {
 
     defaultConfig {
         applicationId = "com.rideshare.rideshare"
-        minSdkVersion = flutter.minSdkVersion
+        // Firebase Auth (23.x) requires minSdk 23.
+        // Keeping this explicit avoids manifest-merge failures.
+        minSdkVersion = 23
         targetSdk = 36
         versionCode = 2
         versionName = "2.0.0"
