@@ -23,14 +23,11 @@ try {
       throw new Error("Invalid FIREBASE_SERVICE_ACCOUNT_KEY format");
     }
   } else {
-    // Development mode - use mock/local Firestore
-    console.log("[FIREBASE] Running in development mode without credentials");
-    console.log("[FIREBASE] Set FIREBASE_SERVICE_ACCOUNT_KEY for production");
-    
-    // Initialize with minimal config for development
-    firebaseApp = admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || "rideshare-hub-dev",
-    });
+    // Throw error if no credentials provided
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT_KEY is required. Please add your Firebase credentials to .env file. " +
+      "Visit https://console.firebase.google.com to get your service account key."
+    );
   }
 }
 
