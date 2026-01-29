@@ -1,7 +1,11 @@
 /// API Configuration for RideShare App
-/// 
+///
 /// This file contains the base URL configuration for the API.
 /// Update the baseUrl based on your deployment environment.
+
+library api_config;
+
+import 'package:flutter/foundation.dart';
 
 class ApiConfig {
   // Development: Use your local machine IP or localhost
@@ -58,12 +62,12 @@ class ApiConfig {
 
   // Debug info
   static void printConfig() {
-    print('=== API Configuration ===');
-    print('Base URL: $baseUrl');
-    print('Environment: ${isProduction ? 'Production' : 'Development'}');
-    print('Connection Timeout: ${connectionTimeout.inSeconds}s');
-    print('Receive Timeout: ${receiveTimeout.inSeconds}s');
-    print('========================');
+    debugPrint('=== API Configuration ===');
+    debugPrint('Base URL: $baseUrl');
+    debugPrint('Environment: ${isProduction ? 'Production' : 'Development'}');
+    debugPrint('Connection Timeout: ${connectionTimeout.inSeconds}s');
+    debugPrint('Receive Timeout: ${receiveTimeout.inSeconds}s');
+    debugPrint('========================');
   }
 }
 

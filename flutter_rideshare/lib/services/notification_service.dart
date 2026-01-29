@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
@@ -143,7 +144,7 @@ class NotificationService {
 
   void _onNotificationTapped(NotificationResponse response) {
     // Handle notification tap
-    print('Notification tapped: ${response.payload}');
+    debugPrint('Notification tapped: ${response.payload}');
   }
 
   Future<void> cancelAll() async {

@@ -145,7 +145,9 @@ class _AddCarDialogState extends State<AddCarDialog> {
         border: const OutlineInputBorder(),
       ),
       onTap: () async {
+        if (!mounted) return;
         final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
+        if (!mounted) return;
         if (time != null) {
           controller.text = time.format(context);
         }

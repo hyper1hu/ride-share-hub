@@ -216,21 +216,21 @@ class HomeScreen extends StatelessWidget {
                               ],
                               subtitle: 'All of WB',
                             ),
-                            StatsCard(
+                            const StatsCard(
                               title: 'Vehicle Types',
                               value: '8+',
                               icon: Icons.car_rental,
                               gradientColors: [
-                                Theme.of(context).primaryColor,
-                                Theme.of(context).primaryColor.withOpacity(0.7),
+                                Color(0xFF1E3A8A),
+                                Color(0xFF1E3A8A),
                               ],
                               subtitle: 'Options',
                             ),
-                            StatsCard(
+                            const StatsCard(
                               title: 'Support',
                               value: '24/7',
                               icon: Icons.support_agent,
-                              gradientColors: const [
+                              gradientColors: [
                                 Color(0xFFF59E0B),
                                 Color(0xFFD97706),
                               ],
