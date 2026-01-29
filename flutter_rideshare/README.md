@@ -327,7 +327,12 @@ For issues:
 - [Flutter Documentation](https://flutter.dev/docs)
 - [Dart Language](https://dart.dev)
 - [Flutter Packages](https://pub.dev)
-- [Backend Setup Guide](../SETUP.md)
+
+---
+
+## Firebase Setup
+
+See `FIREBASE_SETUP.md`.
 
 ---
 

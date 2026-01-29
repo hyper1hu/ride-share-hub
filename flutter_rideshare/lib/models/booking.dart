@@ -1,3 +1,5 @@
+import '../utils/date_time_parser.dart';
+
 class Booking {
   final String id;
   final String carId;
@@ -31,9 +33,7 @@ class Booking {
       tripType: json['tripType'] ?? 'one_way',
       totalFare: (json['totalFare'] ?? 0).toDouble(),
       status: json['status'] ?? 'confirmed',
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : DateTime.now(),
+      createdAt: parseDateTime(json['createdAt']),
     );
   }
 

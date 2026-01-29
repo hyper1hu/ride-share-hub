@@ -1,3 +1,5 @@
+import '../utils/date_time_parser.dart';
+
 class Car {
   final String id;
   final String vehicleType;
@@ -64,9 +66,7 @@ class Car {
       returnTime: json['returnTime'] ?? '',
       seatsAvailable: json['seatsAvailable'] ?? 0,
       status: json['status'] ?? 'available',
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
-          : DateTime.now(),
+      createdAt: parseDateTime(json['createdAt']),
     );
   }
 
