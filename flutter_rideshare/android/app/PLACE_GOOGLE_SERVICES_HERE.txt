@@ -1,0 +1,44 @@
+📍 PLACE YOUR google-services.json FILE HERE
+==============================================
+
+This directory needs the Firebase configuration file.
+
+STEPS TO GET THE FILE:
+----------------------
+
+1. Go to: https://console.firebase.google.com/
+2. Select your Firebase project
+3. Click the Settings icon (⚙️) → Project settings
+4. Scroll to "Your apps" section
+5. Click on your Android app (or add one if it doesn't exist)
+   - Package name: com.rideshare.rideshare
+6. Download google-services.json
+7. Place it in THIS directory (android/app/)
+
+EXPECTED FILE LOCATION:
+-----------------------
+flutter_rideshare/
+└── android/
+    └── app/
+        └── google-services.json  ← PUT FILE HERE
+
+VERIFY PLACEMENT:
+-----------------
+Run this command from the project root:
+  ls -la android/app/google-services.json
+
+You should see the file listed.
+
+AFTER PLACING THE FILE:
+-----------------------
+1. Run: ./setup_firebase.sh
+   (This will verify your configuration)
+
+2. Or manually run:
+   flutter clean
+   flutter pub get
+   flutter build apk --release
+
+NEED HELP?
+----------
+See CONNECT_FIREBASE.md for detailed instructions.

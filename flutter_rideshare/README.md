@@ -58,9 +58,25 @@ cd flutter_rideshare
 flutter pub get
 ```
 
-#### 3a. Configure Firebase/Firestore (Recommended)
+#### 3a. Configure Firebase/Firestore (REQUIRED)
 
-See `FIREBASE_SETUP.md`.
+**🔥 IMPORTANT: Firebase configuration is required for the app to work!**
+
+**Quick Setup (5 minutes):**
+1. Download `google-services.json` from your Firebase Console
+2. Place it in `android/app/google-services.json`
+3. Run `./setup_firebase.sh` to verify
+
+**Detailed Guides:**
+- **Quick Start:** See `FIREBASE_QUICK_START.md` (5-minute setup)
+- **Full Guide:** See `CONNECT_FIREBASE.md` (step-by-step with screenshots)
+- **Original Setup:** See `FIREBASE_SETUP.md`
+
+**What you need:**
+- Firebase project (already created ✓)
+- `google-services.json` file
+- Firestore Database enabled
+- Security rules configured
 
 #### 4. Build APK
 

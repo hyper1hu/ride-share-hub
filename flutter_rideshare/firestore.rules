@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Development mode - OPEN ACCESS (Change for production!)
+    // Uncomment this for initial testing:
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Production Security Rules (Comment out the above rule and uncomment these):
+    /*
+    
+    // Customers collection
+    match /customers/{customerId} {
+      // Users can read their own customer profile
+      allow read: if isOwner(customerId);
+      
+      // Users can create their own customer profile
+      allow create: if isSignedIn() && request.auth.uid == customerId;
+      
+      // Users can update their own customer profile
+      allow update: if isOwner(customerId);
+      
+      // Only allow deletion by the owner
+      allow delete: if isOwner(customerId);
+    }
+    
+    // Drivers collection
+    match /drivers/{driverId} {
+      // Anyone can read driver profiles (for customer to see available drivers)
+      allow read: if true;
+      
+      // Users can create their own driver profile
+      allow create: if isSignedIn() && request.auth.uid == driverId;
+      
+      // Users can update their own driver profile
+      allow update: if isOwner(driverId);
+      
+      // Only allow deletion by the owner
+      allow delete: if isOwner(driverId);
+    }
+    
+    // Cars collection
+    match /cars/{carId} {
+      // Anyone can read car listings (for customers to search)
+      allow read: if true;
+      
+      // Only authenticated users can create cars
+      allow create: if isSignedIn();
+      
+      // Only the driver who owns the car can update it
+      allow update: if isSignedIn() && 
+                      resource.data.driverId == request.auth.uid;
+      
+      // Only the driver who owns the car can delete it
+      allow delete: if isSignedIn() && 
+                      resource.data.driverId == request.auth.uid;
+    }
+    
+    // Bookings collection
+    match /bookings/{bookingId} {
+      // Users can read bookings they're involved in (as customer or driver)
+      allow read: if isSignedIn() && 
+                    (resource.data.customerId == request.auth.uid || 
+                     resource.data.driverId == request.auth.uid);
+      
+      // Customers can create bookings
+      allow create: if isSignedIn() && 
+                      request.resource.data.customerId == request.auth.uid;
+      
+      // Both customer and driver can update booking status
+      allow update: if isSignedIn() && 
+                      (resource.data.customerId == request.auth.uid || 
+                       resource.data.driverId == request.auth.uid);
+      
+      // Only customers can delete their bookings
+      allow delete: if isSignedIn() && 
+                      resource.data.customerId == request.auth.uid;
+    }
+    
+    // OTPs collection
+    match /otps/{otpId} {
+      // Anyone can read OTPs (needed for verification)
+      // In production, consider adding rate limiting
+      allow read: if true;
+      
+      // Anyone can create OTPs (for phone verification)
+      allow create: if true;
+      
+      // No updates or deletes allowed (OTPs should expire naturally)
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    */
+  }
+}
