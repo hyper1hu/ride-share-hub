@@ -1,11 +1,11 @@
 # Firebase Setup (RideShare)
 
-This Flutter app supports two modes:
+This Flutter app is **Firebase-only**:
 
-1) **Firebase/Firestore mode (recommended)**
-2) **Offline local mode** (automatic fallback if Firebase isn’t configured)
+- **Database:** Firebase Firestore
+- **Auth:** Firebase Auth (optional; app currently uses OTP stored in Firestore)
 
-The app will try `Firebase.initializeApp()` at startup. If initialization fails, it will automatically use a local (SharedPreferences) backend.
+The app will try `Firebase.initializeApp()` at startup. If initialization fails, it will show a setup screen telling you how to add Firebase config.
 
 ## 1) Create Firebase project
 
@@ -58,4 +58,3 @@ service cloud.firestore {
 ```
 
 Replace with proper auth rules before production.
-

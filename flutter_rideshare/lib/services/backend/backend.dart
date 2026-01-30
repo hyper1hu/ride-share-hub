@@ -2,11 +2,17 @@ import '../../models/booking.dart';
 import '../../models/car.dart';
 import '../../models/customer.dart';
 import '../../models/driver.dart';
-import '../api_service.dart';
+
+class OtpResult {
+  final bool success;
+  final String? otp;
+  final String? error;
+  final DateTime? expiresAt;
+
+  OtpResult({required this.success, this.otp, this.error, this.expiresAt});
+}
 
 abstract class RideShareBackend {
-  bool get supportsFirebase;
-
   Future<OtpResult> sendOtp(String mobile, String userType);
   Future<Map<String, dynamic>> verifyOtp(String mobile, String otp, String userType);
 

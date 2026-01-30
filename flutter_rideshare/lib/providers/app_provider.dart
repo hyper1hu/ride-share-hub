@@ -4,7 +4,6 @@ import '../models/car.dart';
 import '../models/booking.dart';
 import '../models/customer.dart';
 import '../models/driver.dart';
-import '../services/api_service.dart';
 import '../services/backend/backend.dart';
 
 class BackendError implements Exception {
