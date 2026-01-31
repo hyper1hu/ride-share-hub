@@ -10,28 +10,12 @@ import 'screens/home_screen.dart';
 import 'screens/customer_screen.dart';
 import 'screens/driver_screen.dart';
 import 'screens/driver_register_screen.dart';
-import 'screens/firebase_setup_screen.dart';
-import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
-  RideShareBackend? backend;
-  Object? backendInitError;
-  try {
-    backend = await BackendBootstrap.initialize();
-  } catch (e) {
-    backendInitError = e;
-  }
-  
-  // Initialize notification service
-  await NotificationService().initialize();
-
-  if (backend == null) {
-    runApp(FirebaseSetupApp(error: backendInitError));
-    return;
-  }
+  final backend = await BackendBootstrap.initialize();
 
   runApp(RideShareApp(backend: backend, prefs: prefs));
 }

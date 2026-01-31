@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../models/car.dart';
-import '../data/locations.dart';
 import '../models/booking.dart';
 
 class CustomerScreen extends StatefulWidget {
@@ -169,12 +168,20 @@ class _CustomerScreenState extends State<CustomerScreen> {
     required IconData icon,
     required Color iconColor,
   }) {
+    final commonLocations = [
+      'Howrah Station', 'Sealdah Station', 'Kolkata Airport',
+      'Victoria Memorial', 'Park Street', 'Salt Lake', 'New Town',
+      'Esplanade', 'Dakshineswar', 'Siliguri', 'Darjeeling', 'Digha'
+    ];
+
     return Autocomplete<String>(
       optionsBuilder: (textEditingValue) {
         if (textEditingValue.text.isEmpty) {
-          return LocationData.allLocationNames.take(10);
+          return commonLocations.take(10);
         }
-        return LocationData.searchLocations(textEditingValue.text).take(10);
+        return commonLocations
+            .where((location) => location.toLowerCase().contains(textEditingValue.text.toLowerCase()))
+            .take(10);
       },
       onSelected: (selection) {
         controller.text = selection;

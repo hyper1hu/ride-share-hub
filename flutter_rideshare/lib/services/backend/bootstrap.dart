@@ -1,12 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-
 import 'backend.dart';
-import 'firestore_backend.dart';
+import 'simple_backend.dart';
 
 class BackendBootstrap {
   static Future<RideShareBackend> initialize() async {
-    await Firebase.initializeApp();
-    return FirestoreBackend(db: FirebaseFirestore.instance);
+    // Simple in-memory backend - no external dependencies
+    await Future.delayed(const Duration(milliseconds: 100));
+    return SimpleBackend();
   }
 }
