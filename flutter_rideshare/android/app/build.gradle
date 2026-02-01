@@ -11,7 +11,7 @@ if (file("google-services.json").exists()) {
 }
 
 android {
-    namespace = "com.rideshare.rideshare"
+    namespace = "com.chalooride.app"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rideshare.rideshare"
+        applicationId = "com.chalooride.app"
         // Firebase Auth (23.x) requires minSdk 23.
         // Keeping this explicit avoids manifest-merge failures.
         minSdkVersion = flutter.minSdkVersion

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# RideShare Hub - Database Setup Script
+# Chaloo Ride - Database Setup Script
 # This script sets up the PostgreSQL database for the application
 
 set -e
 
-echo "🚀 RideShare Hub - Database Setup"
+echo "🚀 Chaloo Ride - Database Setup"
 echo "=================================="
 echo ""
 

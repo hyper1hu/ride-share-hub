@@ -17,27 +17,27 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/rideshare-hub:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/chaloo-ride:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/rideshare-hub:latest'
+      - 'gcr.io/$PROJECT_ID/chaloo-ride:latest'
       - '.'
-    
+
   # Step 4: Push Docker image with commit SHA
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/rideshare-hub:$COMMIT_SHA']
-    
+    args: ['push', 'gcr.io/$PROJECT_ID/chaloo-ride:$COMMIT_SHA']
+
   # Step 5: Push Docker image with latest tag
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/rideshare-hub:latest']
-    
+    args: ['push', 'gcr.io/$PROJECT_ID/chaloo-ride:latest']
+
   # Step 6: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'rideshare-hub'
-      - '--image=gcr.io/$PROJECT_ID/rideshare-hub:$COMMIT_SHA'
+      - 'chaloo-ride'
+      - '--image=gcr.io/$PROJECT_ID/chaloo-ride:$COMMIT_SHA'
       - '--region=us-central1'
       - '--platform=managed'
       - '--allow-unauthenticated'
@@ -48,8 +48,8 @@ steps:
 
 # Images to be pushed to Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/rideshare-hub:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/rideshare-hub:latest'
+  - 'gcr.io/$PROJECT_ID/chaloo-ride:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/chaloo-ride:latest'
 
 # Build options
 options:

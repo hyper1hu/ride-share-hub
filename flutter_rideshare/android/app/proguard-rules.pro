@@ -22,7 +22,7 @@
 -keep interface okhttp3.** { *; }
 
 # Keep model classes
--keep class com.rideshare.rideshare.models.** { *; }
+-keep class com.chalooride.app.models.** { *; }
 
 # Keep native methods
 -keepclasseswithmembernames class * {

@@ -62,7 +62,7 @@ export default function Home() {
             <div className="h-9 w-9 rounded-lg gradient-primary flex items-center justify-center shadow-lg">
               <Car className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">RideShare</span>
+            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Chaloo Ride</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/customer">
@@ -431,7 +431,7 @@ export default function Home() {
                 <Car className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <div className="font-bold text-lg">RideShare</div>
+                <div className="font-bold text-lg">Chaloo Ride</div>
                 <div className="text-sm text-muted-foreground">West Bengal's Transport Network</div>
               </div>
             </div>

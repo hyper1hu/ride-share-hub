@@ -63,7 +63,7 @@ class RouteMapView extends StatelessWidget {
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.rideshare.rideshare',
+              userAgentPackageName: 'com.chalooride.app',
             ),
             // Route polyline
             if (points.isNotEmpty)

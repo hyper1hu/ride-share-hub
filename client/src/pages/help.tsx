@@ -193,8 +193,8 @@ export default function Help() {
               </div>
               <h3 className="font-semibold mb-1">Email Us</h3>
               <p className="text-sm text-muted-foreground mb-3">We'll respond within 24 hours</p>
-              <a href="mailto:support@ridesharehub.com" className="text-green-600 dark:text-green-400 font-medium">
-                support@ridesharehub.com
+              <a href="mailto:support@chalooride.com" className="text-green-600 dark:text-green-400 font-medium">
+                support@chalooride.com
               </a>
             </CardContent>
           </Card>

@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: false }));
 // Configure session for mobile API
 // Note: For production scale, consider Redis session store
 app.use(session({
-  secret: process.env.SESSION_SECRET || "rideshare-secret-key-change-in-production",
+  secret: process.env.SESSION_SECRET || "chaloo-ride-secret-key-change-in-production",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -41,19 +41,19 @@ const httpServer = createServer(app);
 
   // Health check endpoints
   app.get('/health', (req, res) => {
-    res.json({ 
-      status: 'ok', 
+    res.json({
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      service: 'RideShare API',
+      service: 'Chaloo Ride API',
       version: '2.0.0'
     });
   });
 
   app.get('/api/health', (req, res) => {
-    res.json({ 
-      status: 'ok', 
+    res.json({
+      status: 'ok',
       timestamp: new Date().toISOString(),
-      service: 'RideShare API',
+      service: 'Chaloo Ride API',
       version: '2.0.0',
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development'
@@ -63,9 +63,9 @@ const httpServer = createServer(app);
   // Root endpoint for API info
   app.get('/', (req, res) => {
     res.json({
-      name: 'RideShare Hub API',
+      name: 'Chaloo Ride API',
       version: '2.0.0',
-      description: 'Backend API for RideShare mobile application',
+      description: 'Backend API for Chaloo Ride mobile application',
       endpoints: {
         health: '/health',
         auth: '/api/auth/*',

@@ -6,7 +6,7 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rideshare/screens/firebase_setup_screen.dart';
+import 'package:chaloo_ride/screens/firebase_setup_screen.dart';
 
 void main() {
   testWidgets('App loads home screen', (WidgetTester tester) async {

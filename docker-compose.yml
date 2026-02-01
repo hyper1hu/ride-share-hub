@@ -4,12 +4,12 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: rideshare-postgres
+    container_name: chaloo-ride-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: rideshare
+      POSTGRES_DB: chaloo_ride
     ports:
       - "5432:5432"
     volumes:
@@ -20,19 +20,19 @@ services:
       timeout: 5s
       retries: 5
 
-  # RideShare Hub Application
+  # Chaloo Ride Application
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rideshare-app
+    container_name: chaloo-ride-app
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/rideshare
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chaloo_ride
       SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production}
       PORT: 5000
     ports:
@@ -49,10 +49,10 @@ services:
   # Optional: pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: rideshare-pgadmin
+    container_name: chaloo-ride-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@rideshare.com
+      PGADMIN_DEFAULT_EMAIL: admin@chalooride.com
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
@@ -72,4 +72,4 @@ volumes:
 
 networks:
   default:
-    name: rideshare-network
+    name: chaloo-ride-network

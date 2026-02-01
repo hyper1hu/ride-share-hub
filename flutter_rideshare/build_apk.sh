@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# RideShare Flutter App - APK Build Script
+# Chaloo Ride Flutter App - APK Build Script
 # This script builds production-ready APK for Android
 
 set -e  # Exit on error
 
 echo "=================================="
-echo "RideShare Flutter APK Builder"
+echo "Chaloo Ride Flutter APK Builder"
 echo "=================================="
 echo ""
 
@@ -92,17 +92,17 @@ if [ -f "$APK_PATH" ]; then
     echo ""
     
     # Copy to easy access location
-    cp "$APK_PATH" "./rideshare-app.apk"
-    echo -e "${GREEN}✓ APK copied to: ./rideshare-app.apk${NC}"
+    cp "$APK_PATH" "./chaloo-ride-app.apk"
+    echo -e "${GREEN}✓ APK copied to: ./chaloo-ride-app.apk${NC}"
     echo ""
-    
+
     echo "Installation Instructions:"
-    echo "1. Transfer rideshare-app.apk to your Android device"
+    echo "1. Transfer chaloo-ride-app.apk to your Android device"
     echo "2. Enable 'Install from Unknown Sources' in device settings"
     echo "3. Open the APK file and install"
     echo ""
     echo "Or install directly via ADB:"
-    echo "  adb install rideshare-app.apk"
+    echo "  adb install chaloo-ride-app.apk"
     echo ""
 else
     echo -e "${RED}=================================="

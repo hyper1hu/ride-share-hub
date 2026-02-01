@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# RideShare Hub - Deployment Script
+# Chaloo Ride - Deployment Script
 # This script handles deployment to various platforms
 
 set -e
 
-echo "🚀 RideShare Hub - Deployment Script"
+echo "🚀 Chaloo Ride - Deployment Script"
 echo "====================================="
 echo ""
 
@@ -142,14 +142,14 @@ deploy_heroku() {
         echo ""
         echo "After installation, run:"
         echo "  1. heroku login"
-        echo "  2. heroku create rideshare-hub"
+        echo "  2. heroku create chaloo-ride"
         echo "  3. heroku addons:create heroku-postgresql:mini"
         echo "  4. git push heroku main"
         return
     fi
     
     echo "Heroku deployment commands:"
-    echo "  heroku create rideshare-hub"
+    echo "  heroku create chaloo-ride"
     echo "  heroku addons:create heroku-postgresql:mini"
     echo "  heroku config:set SESSION_SECRET=\$(openssl rand -base64 32)"
     echo "  git push heroku main"
@@ -194,11 +194,11 @@ deploy_aws() {
     echo "Option 2: Elastic Beanstalk"
     echo "  1. Install EB CLI: pip install awsebcli"
     echo "  2. Run: eb init"
-    echo "  3. Run: eb create rideshare-hub-env"
+    echo "  3. Run: eb create chaloo-ride-env"
     echo "  4. Run: eb deploy"
     echo ""
     echo "Option 3: ECS/Fargate (Docker)"
-    echo "  1. Build Docker image: docker build -t rideshare-hub ."
+    echo "  1. Build Docker image: docker build -t chaloo-ride ."
     echo "  2. Push to ECR"
     echo "  3. Create ECS task definition"
     echo "  4. Deploy to Fargate"
@@ -220,7 +220,7 @@ local_production() {
     echo ""
     echo "Or use PM2 for process management:"
     echo "  npm install -g pm2"
-    echo "  pm2 start npm --name rideshare-hub -- start"
+    echo "  pm2 start npm --name chaloo-ride -- start"
     echo "  pm2 save"
     echo "  pm2 startup"
 }

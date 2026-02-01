@@ -40,7 +40,7 @@ try {
     console.log("[FIREBASE] Set FIREBASE_SERVICE_ACCOUNT_KEY for production");
 
     firebaseApp = admin.initializeApp({
-      projectId: process.env.FIREBASE_PROJECT_ID || "rideshare-hub-dev",
+      projectId: process.env.FIREBASE_PROJECT_ID || "chaloo-ride-dev",
     });
   }
 }

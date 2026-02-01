@@ -910,9 +910,9 @@ export async function registerRoutes(
   });
 
   app.get("/download/project", (req, res) => {
-    const zipPath = path.join(process.cwd(), "rideshare-project.zip");
+    const zipPath = path.join(process.cwd(), "chaloo-ride-project.zip");
     if (fs.existsSync(zipPath)) {
-      res.download(zipPath, "rideshare-project.zip");
+      res.download(zipPath, "chaloo-ride-project.zip");
     } else {
       res.status(404).json({ error: "File not found" });
     }
