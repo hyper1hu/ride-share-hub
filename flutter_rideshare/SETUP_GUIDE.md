@@ -1,4 +1,4 @@
-# Flutter Rideshare App - Complete Setup Guide
+# Chaloo Ride - Complete Setup Guide
 
 ## Prerequisites
 

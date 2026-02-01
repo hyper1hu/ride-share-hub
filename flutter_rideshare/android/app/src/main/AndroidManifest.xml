@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
-        android:label="Ride Share Hub"
+        android:label="Chaloo Ride"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,6 +1,6 @@
 # Setup Guide
 
-Complete installation and configuration guide for RideShare Hub web admin panel.
+Complete installation and configuration guide for Chaloo Ride web admin panel.
 
 ## Prerequisites
 

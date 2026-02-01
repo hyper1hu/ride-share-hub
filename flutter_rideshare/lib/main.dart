@@ -17,14 +17,14 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final backend = await BackendBootstrap.initialize();
 
-  runApp(RideShareApp(backend: backend, prefs: prefs));
+  runApp(ChalooRideApp(backend: backend, prefs: prefs));
 }
 
-class RideShareApp extends StatelessWidget {
+class ChalooRideApp extends StatelessWidget {
   final RideShareBackend backend;
   final SharedPreferences prefs;
 
-  const RideShareApp({super.key, required this.backend, required this.prefs});
+  const ChalooRideApp({super.key, required this.backend, required this.prefs});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class RideShareApp extends StatelessWidget {
       child: Consumer<AppProvider>(
         builder: (context, appProvider, _) {
           return MaterialApp(
-            title: 'RideShare',
+            title: 'Chaloo Ride',
             debugShowCheckedModeBanner: false,
             theme: _buildLightTheme(),
             darkTheme: _buildDarkTheme(),

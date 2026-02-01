@@ -1,4 +1,4 @@
-# RideShare Hub
+# Chaloo Ride
 
 A comprehensive ride-sharing platform with mobile application for drivers and customers, and web-based admin panel for management.
 
@@ -15,7 +15,7 @@ Native mobile app built with Flutter for iOS and Android devices.
 - Cross-platform support (iOS & Android)
 
 **Download:**
-- Latest APK: `flutter_rideshare/RideShareHub-v2.0.0.apk`
+- Latest APK: `flutter_rideshare/ChalooRide-v2.0.0.apk`
 - Build your own: See [flutter_rideshare/README.md](flutter_rideshare/README.md)
 
 ### Web Admin Panel
@@ -75,11 +75,11 @@ See detailed instructions: [SETUP.md](SETUP.md)
 ## Repository Structure
 
 ```
-ride-share-hub/
+chaloo-ride/
 ├── flutter_rideshare/       # Flutter mobile application
 │   ├── lib/                 # Dart source code
 │   ├── android/             # Android configuration
-│   └── RideShareHub-v2.0.0.apk  # Pre-built APK
+│   └── ChalooRide-v2.0.0.apk  # Pre-built APK
 ├── client/                  # React web admin panel
 │   └── src/                 # Frontend source code
 ├── server/                  # Express backend API

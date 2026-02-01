@@ -1,4 +1,4 @@
-# Quick Start - Flutter Rideshare App
+# Quick Start - Chaloo Ride
 
 Get the app running in 5 minutes!
 

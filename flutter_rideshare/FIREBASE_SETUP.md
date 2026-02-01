@@ -1,4 +1,4 @@
-# Firebase Setup (RideShare)
+# Firebase Setup (Chaloo Ride)
 
 This Flutter app is **Firebase-only**:
 

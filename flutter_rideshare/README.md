@@ -1,4 +1,4 @@
-# RideShare Hub Mobile App
+# Chaloo Ride Mobile App
 
 Flutter-based mobile application for customers and drivers.
 
@@ -202,7 +202,7 @@ platform :ios, '12.0'
 
 1. Create keystore:
 ```bash
-keytool -genkey -v -keystore rideshare.keystore -alias rideshare \
+keytool -genkey -v -keystore chaloo_ride.keystore -alias chaloo_ride \
   -keyalg RSA -keysize 2048 -validity 10000
 ```
 
@@ -210,8 +210,8 @@ keytool -genkey -v -keystore rideshare.keystore -alias rideshare \
 ```properties
 storePassword=your-store-password
 keyPassword=your-key-password
-keyAlias=rideshare
-storeFile=/path/to/rideshare.keystore
+keyAlias=chaloo_ride
+storeFile=/path/to/chaloo_ride.keystore
 ```
 
 3. Build signed APK:

@@ -1,5 +1,5 @@
-name: rideshare
-description: A car hire and ride-sharing application for West Bengal
+name: chaloo_ride
+description: Chaloo Ride - A car hire and ride-sharing application for West Bengal
 
 publish_to: 'none'
 version: 2.0.0+1

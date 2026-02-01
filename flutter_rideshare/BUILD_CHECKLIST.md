@@ -1,4 +1,4 @@
-# Flutter Rideshare - Build Checklist
+# Chaloo Ride - Build Checklist
 
 Use this checklist to ensure your app builds successfully.
 
